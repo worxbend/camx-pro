@@ -1,0 +1,9 @@
+build123d==0.13.0
+threejs-materials==1.2.5
+pillow==13.0.0
+trimesh==5.1.1
+moderngl==5.13.0
+matplotlib==3.11.2
+reportlab==5.0.1
+pytest>=9.1.1,<10
+platformio==6.2.0

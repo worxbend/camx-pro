@@ -1,0 +1,48 @@
+name: Validate prototype
+on: [push, pull_request]
+jobs:
+  firmware:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install platformio==6.2.0
+      - run: python tools/firmware_contract.py --check
+      - run: python tools/test_firmware.py
+      - run: pio run -d firmware -e public
+      - run: python tools/check_firmware_variants.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: viewer/package-lock.json
+      - run: npm --prefix viewer ci
+      - run: cd viewer && npx playwright install --with-deps chromium
+      - run: node tools/test_firmware_ui.mjs
+  cad:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv venv --python 3.14 .venv
+      - run: uv pip sync --python .venv/bin/python requirements-audit.txt
+      - run: .venv/bin/python -m pytest -q
+      - run: .venv/bin/python -m cad.export
+      - run: .venv/bin/python -m tools.prepare_print_plates
+      - run: .venv/bin/python -m tools.validate_artifacts
+      - run: .venv/bin/python -m tools.verify_mechanical_interfaces
+      - run: .venv/bin/python -m tools.verify_parameters_and_loads
+      - run: .venv/bin/python -m tools.verify_dense_motion
+      - run: .venv/bin/python -m tools.verify_cable_routing
+      - run: .venv/bin/python -m tools.validate_motion
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: viewer/package-lock.json
+      - run: npm --prefix viewer ci
+      - run: .venv/bin/python -m tools.stage_viewer
+      - run: node viewer/scripts/verify-model.mjs
+      - run: npm --prefix viewer run build

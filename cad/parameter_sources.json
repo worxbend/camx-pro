@@ -1,0 +1,643 @@
+{
+  "printer.model": {
+    "value": "Bambu Lab A1 mini",
+    "status": "owner-confirmed",
+    "source": "Owner: Bambu Lab A1 mini",
+    "date": "2026-10-20"
+  },
+  "printer.bed": {
+    "value": [
+      180,
+      180,
+      180
+    ],
+    "status": "manufacturer",
+    "source": "https://cdn1.bambulab.com/documentation/quick-start-f507128172bdf/Quick%20start%20guide%20-%20A1%20mini-EN.pdf",
+    "date": "2026-10-20"
+  },
+  "printer.margin": {
+    "value": 8,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "printer.nozzle": {
+    "value": 0.4,
+    "status": "provisional",
+    "source": "Interpreted owner 4mm as 0.4 mm; verify installed nozzle before slicing",
+    "date": "2026-10-20"
+  },
+  "printer.layer": {
+    "value": 0.2,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "printer.material": {
+    "value": "PLA",
+    "status": "owner-confirmed",
+    "source": "Owner specified PLA",
+    "date": "2026-10-20"
+  },
+  "camera.width": {
+    "value": 52,
+    "status": "provisional",
+    "source": "Provisional clearance envelope. Anker publishes approximately55\u00d751\u00d741mm without dimension-axis labels; model uses52W\u00d755D\u00d755H. Confirm folded clip, axis assignment and mounting datums. https://www.ankerjapan.com/products/a3369",
+    "date": "2026-10-20"
+  },
+  "camera.depth": {
+    "value": 55,
+    "status": "provisional",
+    "source": "Provisional clearance envelope. Anker publishes approximately55\u00d751\u00d741mm without dimension-axis labels; model uses52W\u00d755D\u00d755H. Confirm folded clip, axis assignment and mounting datums. https://www.ankerjapan.com/products/a3369",
+    "date": "2026-10-20"
+  },
+  "camera.height": {
+    "value": 55,
+    "status": "provisional",
+    "source": "Provisional clearance envelope. Anker publishes approximately55\u00d751\u00d741mm without dimension-axis labels; model uses52W\u00d755D\u00d755H. Confirm folded clip, axis assignment and mounting datums. https://www.ankerjapan.com/products/a3369",
+    "date": "2026-10-20"
+  },
+  "camera.mass_g": {
+    "value": 83,
+    "status": "manufacturer",
+    "source": "https://www.ankerjapan.com/products/a3369 ; approximately 83 g, retrieved 2026-10-20",
+    "date": "2026-10-20"
+  },
+  "camera.cg_offset": {
+    "value": 2,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "camera.clip_depth": {
+    "value": 8,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "camera.plug_depth": {
+    "value": 25,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "camera.cable_diameter": {
+    "value": 4,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "camera.bend_radius": {
+    "value": 20,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "motor.diameter": {
+    "value": 28,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "motor.depth": {
+    "value": 20,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "motor.ear_pitch": {
+    "value": 35,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "motor.ear_diameter": {
+    "value": 7,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "motor.hole": {
+    "value": 4.2,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "motor.ear_thickness": {
+    "value": 1.5,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "motor.shaft_diameter": {
+    "value": 5,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "motor.shaft_flats": {
+    "value": 3,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "motor.shaft_length": {
+    "value": 9,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "motor.shaft_offset": {
+    "value": 8,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "motor.mass_g": {
+    "value": 35,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "motor.half_steps_per_turn": {
+    "value": 4096,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "base.width": {
+    "value": 160,
+    "status": "provisional",
+    "source": "P3 engineering design value; verify hardware fits and printed dimensions",
+    "date": "2026-10-20"
+  },
+  "base.depth": {
+    "value": 160,
+    "status": "provisional",
+    "source": "P3 engineering design value; verify hardware fits and printed dimensions",
+    "date": "2026-10-20"
+  },
+  "base.height": {
+    "value": 89.5,
+    "status": "provisional",
+    "source": "P3 engineering design value; verify hardware fits and printed dimensions",
+    "date": "2026-10-20"
+  },
+  "base.corner": {
+    "value": 38,
+    "status": "provisional",
+    "source": "P3 engineering design value; verify hardware fits and printed dimensions",
+    "date": "2026-10-20"
+  },
+  "base.wall": {
+    "value": 3.0,
+    "status": "provisional",
+    "source": "P3 engineering design value; verify hardware fits and printed dimensions",
+    "date": "2026-10-20"
+  },
+  "pan.ring_teeth": {
+    "value": 60,
+    "status": "design-choice",
+    "source": "P2 planetary packaging decision; hardware interfaces require measurements and fit trials",
+    "date": "2026-10-20"
+  },
+  "pan.module": {
+    "value": 1.25,
+    "status": "design-choice",
+    "source": "P2 planetary packaging decision; hardware interfaces require measurements and fit trials",
+    "date": "2026-10-20"
+  },
+  "pan.pressure_angle": {
+    "value": 20,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "pan.backlash": {
+    "value": 0.3,
+    "status": "design-choice",
+    "source": "P2 planetary packaging decision; hardware interfaces require measurements and fit trials",
+    "date": "2026-10-20"
+  },
+  "pan.gear_height": {
+    "value": 7,
+    "status": "design-choice",
+    "source": "P2 planetary packaging decision; hardware interfaces require measurements and fit trials",
+    "date": "2026-10-20"
+  },
+  "pan.gear_z": {
+    "value": 29,
+    "status": "design-choice",
+    "source": "P2 planetary packaging decision; hardware interfaces require measurements and fit trials",
+    "date": "2026-10-20"
+  },
+  "pan.platform_diameter": {
+    "value": 98,
+    "status": "design-choice",
+    "source": "P0 parametric layout; validate gear fit, torque and cable sweep",
+    "date": "2026-10-20"
+  },
+  "pan.platform_z": {
+    "value": 88.5,
+    "status": "provisional",
+    "source": "P3 engineering design value; verify hardware fits and printed dimensions",
+    "date": "2026-10-20"
+  },
+  "pan.platform_thickness": {
+    "value": 5,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "pan.bearing_id": {
+    "value": 45,
+    "status": "manufacturer",
+    "source": "https://www.nsk.com/eu-de/engineering/6809-apn.html",
+    "date": "2026-10-20"
+  },
+  "pan.bearing_od": {
+    "value": 58,
+    "status": "manufacturer",
+    "source": "https://www.nsk.com/eu-de/engineering/6809-apn.html",
+    "date": "2026-10-20"
+  },
+  "pan.bearing_width": {
+    "value": 7,
+    "status": "manufacturer",
+    "source": "https://www.nsk.com/eu-de/engineering/6809-apn.html",
+    "date": "2026-10-20"
+  },
+  "pan.bearing_z": {
+    "value": 49,
+    "status": "provisional",
+    "source": "P3 engineering design value; verify hardware fits and printed dimensions",
+    "date": "2026-10-20"
+  },
+  "pan.bearing_spacing": {
+    "value": 12,
+    "status": "design-choice",
+    "source": "P0 parametric layout; validate gear fit, torque and cable sweep",
+    "date": "2026-10-20"
+  },
+  "pan.cable_bore": {
+    "value": 18,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "pan.minimum": {
+    "value": -160,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "pan.maximum": {
+    "value": 160,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "tilt.axis_z": {
+    "value": 154.5,
+    "status": "provisional",
+    "source": "P3 engineering design value; verify hardware fits and printed dimensions",
+    "date": "2026-10-20"
+  },
+  "tilt.arm_inner": {
+    "value": 39,
+    "status": "provisional",
+    "source": "P3 engineering design value; verify hardware fits and printed dimensions",
+    "date": "2026-10-20"
+  },
+  "tilt.arm_thickness": {
+    "value": 6,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "tilt.bearing_id": {
+    "value": 8,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "tilt.bearing_od": {
+    "value": 16,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "tilt.bearing_width": {
+    "value": 5,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "tilt.minimum": {
+    "value": -30,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "tilt.maximum": {
+    "value": 90,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "tilt.cradle_wall": {
+    "value": 3,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "electronics.esp32": {
+    "value": [
+      58,
+      29,
+      14
+    ],
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "electronics.driver": {
+    "value": [
+      35,
+      32,
+      14
+    ],
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "electronics.integration": {
+    "value": [
+      38,
+      24,
+      10
+    ],
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "electronics.capacitor": {
+    "value": [
+      10,
+      20
+    ],
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "electronics.usb_board": {
+    "value": [
+      12,
+      18,
+      5
+    ],
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "fit.sliding": {
+    "value": 0.3,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "fit.bearing_diametral": {
+    "value": 0.2,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "fit.camera_side": {
+    "value": 0.8,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "fit.moving": {
+    "value": 1.0,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "motion.pan_speed": {
+    "value": 4,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "motion.tilt_speed": {
+    "value": 4,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "motion.acceleration": {
+    "value": 8,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "motion.maximum_step_rate": {
+    "value": 800,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "motion.homing_rate": {
+    "value": 1,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "motion.commissioned": {
+    "value": false,
+    "status": "provisional",
+    "source": "Engineering starting assumption; confirm before physical fit or power-up",
+    "date": "2026-10-20"
+  },
+  "tilt.motor_teeth": {
+    "value": 20,
+    "status": "design-choice",
+    "source": "P1 concealed belt drive; verify matched supplier pulley and belt dimensions",
+    "date": "2026-10-20"
+  },
+  "tilt.axis_teeth": {
+    "value": 40,
+    "status": "design-choice",
+    "source": "P1 concealed belt drive; verify matched supplier pulley and belt dimensions",
+    "date": "2026-10-20"
+  },
+  "tilt.belt_pitch": {
+    "value": 2,
+    "status": "design-choice",
+    "source": "P1 concealed belt drive; verify matched supplier pulley and belt dimensions",
+    "date": "2026-10-20"
+  },
+  "tilt.belt_length": {
+    "value": 160,
+    "status": "design-choice",
+    "source": "P1 concealed belt drive; verify matched supplier pulley and belt dimensions",
+    "date": "2026-10-20"
+  },
+  "tilt.belt_width": {
+    "value": 4,
+    "status": "design-choice",
+    "source": "P1 concealed belt drive; verify matched supplier pulley and belt dimensions",
+    "date": "2026-10-20"
+  },
+  "tilt.motor_z": {
+    "value": 121,
+    "status": "provisional",
+    "source": "P3 engineering design value; verify hardware fits and printed dimensions",
+    "date": "2026-10-20"
+  },
+  "pan.sun_teeth": {
+    "value": 20,
+    "status": "design-choice",
+    "source": "P2 planetary packaging decision; hardware interfaces require measurements and fit trials",
+    "date": "2026-10-20"
+  },
+  "pan.planet_teeth": {
+    "value": 20,
+    "status": "design-choice",
+    "source": "P2 planetary packaging decision; hardware interfaces require measurements and fit trials",
+    "date": "2026-10-20"
+  },
+  "pan.planet_count": {
+    "value": 4,
+    "status": "design-choice",
+    "source": "P2 planetary packaging decision; hardware interfaces require measurements and fit trials",
+    "date": "2026-10-20"
+  },
+  "pan.motor_z": {
+    "value": 4.5,
+    "status": "design-choice",
+    "source": "P2 planetary packaging decision; hardware interfaces require measurements and fit trials",
+    "date": "2026-10-20"
+  },
+  "fit.journal_diametral": {
+    "value": 0.15,
+    "status": "provisional",
+    "source": "P3 engineering design value; verify hardware fits and printed dimensions",
+    "date": "2026-10-20"
+  },
+  "fit.pilot_diametral": {
+    "value": 0.05,
+    "status": "provisional",
+    "source": "P3 engineering design value; verify hardware fits and printed dimensions",
+    "date": "2026-10-20"
+  },
+  "fit.shaft_diametral": {
+    "value": 0.15,
+    "status": "provisional",
+    "source": "P3 engineering design value; verify hardware fits and printed dimensions",
+    "date": "2026-10-20"
+  },
+  "interfaces.planet_bearing_od": {
+    "value": 16,
+    "status": "provisional",
+    "source": "P3 engineering design value; verify hardware fits and printed dimensions",
+    "date": "2026-10-20"
+  },
+  "interfaces.planet_bearing_id": {
+    "value": 8,
+    "status": "provisional",
+    "source": "P3 engineering design value; verify hardware fits and printed dimensions",
+    "date": "2026-10-20"
+  },
+  "interfaces.planet_bearing_width": {
+    "value": 5,
+    "status": "provisional",
+    "source": "P3 engineering design value; verify hardware fits and printed dimensions",
+    "date": "2026-10-20"
+  },
+  "interfaces.planet_cap_nut_af": {
+    "value": 3.2,
+    "status": "provisional",
+    "source": "P3 engineering design value; verify hardware fits and printed dimensions",
+    "date": "2026-10-20"
+  },
+  "interfaces.planet_cap_nut_height": {
+    "value": 1.3,
+    "status": "provisional",
+    "source": "P3 engineering design value; verify hardware fits and printed dimensions",
+    "date": "2026-10-20"
+  },
+  "interfaces.output_inner_land_od": {
+    "value": 48,
+    "status": "provisional",
+    "source": "P3 engineering design value; verify hardware fits and printed dimensions",
+    "date": "2026-10-20"
+  },
+  "interfaces.output_outer_land_id": {
+    "value": 55,
+    "status": "provisional",
+    "source": "P3 engineering design value; verify hardware fits and printed dimensions",
+    "date": "2026-10-20"
+  },
+  "interfaces.tilt_inner_land_od": {
+    "value": 11,
+    "status": "provisional",
+    "source": "P3 engineering design value; verify hardware fits and printed dimensions",
+    "date": "2026-10-20"
+  },
+  "interfaces.tilt_outer_land_id": {
+    "value": 13.5,
+    "status": "provisional",
+    "source": "P3 engineering design value; verify hardware fits and printed dimensions",
+    "date": "2026-10-20"
+  },
+  "interfaces.output_endplay": {
+    "value": 0.2,
+    "status": "provisional",
+    "source": "P3 engineering design value; verify hardware fits and printed dimensions",
+    "date": "2026-10-20"
+  },
+  "interfaces.tilt_endplay": {
+    "value": 0.2,
+    "status": "provisional",
+    "source": "P3 engineering design value; verify hardware fits and printed dimensions",
+    "date": "2026-10-20"
+  },
+  "interfaces.motor_adjustment": {
+    "value": 1.0,
+    "status": "provisional",
+    "source": "P3 engineering design value; verify hardware fits and printed dimensions",
+    "date": "2026-10-20"
+  },
+  "interfaces.m2_head_diameter": {
+    "value": 3.5,
+    "status": "provisional",
+    "source": "P3 engineering design value; verify hardware fits and printed dimensions",
+    "date": "2026-10-20"
+  },
+  "interfaces.m2_head_height": {
+    "value": 1.2,
+    "status": "provisional",
+    "source": "P3 engineering design value; verify hardware fits and printed dimensions",
+    "date": "2026-10-20"
+  },
+  "interfaces.m3_head_diameter": {
+    "value": 5.5,
+    "status": "provisional",
+    "source": "P3 engineering design value; verify hardware fits and printed dimensions",
+    "date": "2026-10-20"
+  },
+  "interfaces.m3_head_height": {
+    "value": 2.0,
+    "status": "provisional",
+    "source": "P3 engineering design value; verify hardware fits and printed dimensions",
+    "date": "2026-10-20"
+  },
+  "interfaces.m3_low_head_height": {
+    "value": 1.6,
+    "status": "provisional",
+    "source": "P3 engineering design value; verify hardware fits and printed dimensions",
+    "date": "2026-10-20"
+  }
+}

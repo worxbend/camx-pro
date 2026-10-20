@@ -1,0 +1,72 @@
+# Python environments, bytecode and tool caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+*.egg-info/
+.eggs/
+
+# Node/Vite dependencies, bundles and browser test output
+node_modules/
+dist/
+.vite/
+coverage/
+test-results/
+playwright-report/
+blob-report/
+
+# PlatformIO, compiled firmware and generated embedded assets
+.pio/
+.pioenvs/
+.piolibdeps/
+firmware/build/
+firmware/data/
+firmware/include/web_ui.hpp
+*.o
+*.obj
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+*.elf
+*.bin
+*.hex
+*.map
+
+# Reproducible CAD/printing exports and staged viewer downloads
+/exports/
+/release/
+/viewer/public/downloads/
+*.gcode
+
+# Private configuration; keep placeholder examples and dependency locks
+credentials.h
+secrets.h
+.env
+.env.*
+!.env.example
+!.env.template
+.aws/
+*.pem
+*.key
+
+# Local agent/hosting state, editors and operating-system metadata
+.openai/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
+*.log

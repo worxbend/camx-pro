@@ -1,0 +1,150 @@
+{
+  "revision": "p3",
+  "status": "P3 engineering revision \u2014 measured hardware and physical qualification pending",
+  "printer": {
+    "model": "Bambu Lab A1 mini",
+    "bed": [
+      180,
+      180,
+      180
+    ],
+    "margin": 8,
+    "nozzle": 0.4,
+    "layer": 0.2,
+    "material": "PLA"
+  },
+  "camera": {
+    "width": 52,
+    "depth": 55,
+    "height": 55,
+    "mass_g": 83,
+    "cg_offset": 2,
+    "clip_depth": 8,
+    "plug_depth": 25,
+    "cable_diameter": 4,
+    "bend_radius": 20
+  },
+  "motor": {
+    "diameter": 28,
+    "depth": 20,
+    "ear_pitch": 35,
+    "ear_diameter": 7,
+    "hole": 4.2,
+    "ear_thickness": 1.5,
+    "shaft_diameter": 5,
+    "shaft_flats": 3,
+    "shaft_length": 9,
+    "shaft_offset": 8,
+    "mass_g": 35,
+    "half_steps_per_turn": 4096
+  },
+  "base": {
+    "width": 160,
+    "depth": 160,
+    "height": 89.5,
+    "corner": 38,
+    "wall": 3.0
+  },
+  "pan": {
+    "ring_teeth": 60,
+    "module": 1.25,
+    "pressure_angle": 20,
+    "backlash": 0.3,
+    "gear_height": 7,
+    "gear_z": 29,
+    "platform_diameter": 98,
+    "platform_z": 88.5,
+    "platform_thickness": 5,
+    "bearing_id": 45,
+    "bearing_od": 58,
+    "bearing_width": 7,
+    "bearing_z": 49,
+    "bearing_spacing": 12,
+    "cable_bore": 18,
+    "minimum": -160,
+    "maximum": 160,
+    "sun_teeth": 20,
+    "planet_teeth": 20,
+    "planet_count": 4,
+    "motor_z": 4.5
+  },
+  "tilt": {
+    "axis_z": 154.5,
+    "arm_inner": 39,
+    "arm_thickness": 6,
+    "bearing_id": 8,
+    "bearing_od": 16,
+    "bearing_width": 5,
+    "minimum": -30,
+    "maximum": 90,
+    "cradle_wall": 3,
+    "motor_teeth": 20,
+    "axis_teeth": 40,
+    "belt_pitch": 2,
+    "belt_length": 160,
+    "belt_width": 4,
+    "motor_z": 121
+  },
+  "electronics": {
+    "esp32": [
+      58,
+      29,
+      14
+    ],
+    "driver": [
+      35,
+      32,
+      14
+    ],
+    "integration": [
+      38,
+      24,
+      10
+    ],
+    "capacitor": [
+      10,
+      20
+    ],
+    "usb_board": [
+      12,
+      18,
+      5
+    ]
+  },
+  "fit": {
+    "sliding": 0.3,
+    "bearing_diametral": 0.2,
+    "camera_side": 0.8,
+    "moving": 1.0,
+    "journal_diametral": 0.15,
+    "pilot_diametral": 0.05,
+    "shaft_diametral": 0.15
+  },
+  "motion": {
+    "pan_speed": 4,
+    "tilt_speed": 4,
+    "acceleration": 8,
+    "maximum_step_rate": 800,
+    "homing_rate": 1,
+    "commissioned": false
+  },
+  "interfaces": {
+    "planet_bearing_od": 16,
+    "planet_bearing_id": 8,
+    "planet_bearing_width": 5,
+    "planet_cap_nut_af": 3.2,
+    "planet_cap_nut_height": 1.3,
+    "output_inner_land_od": 48,
+    "output_outer_land_id": 55,
+    "tilt_inner_land_od": 11,
+    "tilt_outer_land_id": 13.5,
+    "output_endplay": 0.2,
+    "tilt_endplay": 0.2,
+    "motor_adjustment": 1.0,
+    "m2_head_diameter": 3.5,
+    "m2_head_height": 1.2,
+    "m3_head_diameter": 5.5,
+    "m3_head_height": 2.0,
+    "m3_low_head_height": 1.6
+  }
+}

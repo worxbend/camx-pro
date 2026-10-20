@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CAMX Pro control</title>
+<style>
+:root{color-scheme:dark;font:16px system-ui;background:#101316;color:#edf2f5}*{box-sizing:border-box}body{max-width:900px;margin:auto;padding:24px}h1{font-size:30px;letter-spacing:-1px;margin-bottom:6px}p{line-height:1.5;color:#bbc8d0}section{background:#1b2228;border:1px solid #37444d;border-radius:16px;padding:20px;margin:18px 0}.row{display:flex;flex-wrap:wrap;gap:10px;align-items:end}label{display:grid;gap:6px;font-size:14px}input,select,textarea,button{font:inherit;border-radius:7px;border:1px solid #5b6a75;padding:10px;background:#11191e;color:inherit}input[type=number]{width:125px}input[type=password]{width:min(100%,400px)}button{cursor:pointer;background:#294b58;min-height:44px}button:hover{background:#376574}button:disabled{opacity:.45;cursor:default}button:focus-visible,input:focus-visible{outline:3px solid #70d5e7;outline-offset:3px}.stop{background:#a52831;font-weight:700;flex:1}.stop:hover{background:#c83440}.jog{touch-action:none;user-select:none;min-width:100px}output{font-variant-numeric:tabular-nums;display:block;margin:12px 0;font-size:20px}#message{min-height:24px;color:#ffd68a}small{color:#b4c4cf}summary{cursor:pointer;padding:10px}textarea{width:100%;min-height:150px;font:14px monospace}h2{font-size:18px;margin-top:0}.badge{font-size:13px;color:#80d4d3}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}
+</style>
+<body>
+<header><div class="badge">CAMX PRO · STEPPER CONTROLLER</div><h1>Pan. Tilt. Precisely commanded.</h1><p>28BYJ-48 · 4:1 planetary pan · 2:1 belt tilt</p></header>
+<section><h2>Connect</h2><div class="row"><label>API token<input id="token" type="password" autocomplete="off" spellcheck="false"></label><button id="connect">Connect</button></div><p><small>Token stays in this page’s memory. Video travels separately over the webcam’s USB cable.</small></p><div id="message" role="status" aria-live="polite">Enter the token configured in your firmware.</div></section>
+<section><h2>Position and motor state</h2><output id="position">Disconnected</output><p id="state">Position is an open-loop estimate, not measured feedback.</p><div class="row"><button id="stop" class="stop">STOP — hold position</button><button id="disarm">Release motors</button></div><p><small>Support the camera before releasing motors. Releasing, resetting or interrupting motion requires a fresh manual reference.</small></p></section>
+<section><h2>1. Reference and arm</h2><p>With motors released, align the mechanism to the stated angles. Zero means centered pan and a level camera. The reference command acknowledges this physical alignment; it does not move or find home.</p><div class="row"><label>Reference pan °<input id="refPan" type="number" value="0" step="0.1"></label><label>Reference tilt °<input id="refTilt" type="number" value="0" step="0.1"></label><button id="reference">Confirm aligned position</button><button id="arm">Arm motors</button></div></section>
+<section><h2>2. Move</h2><div class="row"><label>Pan °<input id="pan" type="number" value="0" step="0.1"></label><label>Tilt °<input id="tilt" type="number" value="0" step="0.1"></label><button id="move">Move absolute</button><button id="relative">Move relative</button><button id="center">Center</button></div><p>Hold a direction to jog. Release to decelerate; wait for motion to finish before changing direction.</p><div class="row"><button class="jog" data-pan="-1" data-tilt="0">← Pan</button><button class="jog" data-pan="1" data-tilt="0">Pan →</button><button class="jog" data-pan="0" data-tilt="1">Tilt ↑</button><button class="jog" data-pan="0" data-tilt="-1">Tilt ↓</button></div></section>
+<section><h2>Presets</h2><div class="row"><label>Slot<select id="preset"><option value="0">1</option><option value="1">2</option><option value="2">3</option><option value="3">4</option><option value="4">5</option><option value="5">6</option><option value="6">7</option><option value="7">8</option></select></label><button id="presetMove">Recall</button><button id="presetSet">Save entered pan/tilt</button></div><p><small>Save the angles entered in Move while motors are released. Flash writes are disabled while armed.</small></p></section>
+<section><details><summary>Calibration and settings</summary><p>Release motors before applying settings. Defaults restrict travel to pan ±20°, tilt ±15°. Set commissioned only after fit, cable, direction and loaded motion checks. Settings changes invalidate the reference.</p><label>Settings JSON<textarea id="settings" spellcheck="false">{"pan_steps":4096,"tilt_steps":4096,"pan_speed":4,"tilt_speed":4,"pan_accel":8,"tilt_accel":8,"pan_min":-20,"pan_max":20,"tilt_min":-15,"tilt_max":15,"pan_inverted":false,"tilt_inverted":false,"commissioned":false}</textarea></label><div class="row"><button id="loadSettings">Load current values</button><button id="saveSettings">Apply and save</button></div></details><details><summary>Controller diagnostics</summary><pre id="diagnostics">No state received.</pre></details></section>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+let token='', state=null, busy=false, generation=0, active=null, owns=false, held=null, releasePending=false, lastBeat=0;
+const message = text => { $('message').textContent=text; };
+function render(s) {
+  state=s;
+  if (!s.armed || s.stopped) owns=false;
+  $('position').textContent=`Pan ${s.axes[0].degrees.toFixed(2)}° · Tilt ${s.axes[1].degrees.toFixed(2)}°`;
+  $('state').textContent=`${s.stopped?'STOP LATCHED':s.moving?'MOVING':s.armed?'ARMED — holding coils':'MOTORS RELEASED'} · ${s.referenced?'Referenced estimate':'POSITION UNKNOWN'} · ${s.commissioned?'Commissioned limits':'Reduced commissioning limits'}`;
+  $('diagnostics').textContent=JSON.stringify(s,null,2);
+  for (const id of ['move','relative','center','presetMove']) $(id).disabled=!s.armed||s.stopped||s.moving;
+  document.querySelectorAll('.jog').forEach(b=>b.disabled=!s.armed||s.stopped);
+  $('reference').disabled=s.armed; $('arm').disabled=s.armed||!s.referenced||s.stopped;
+  $('saveSettings').disabled=s.armed; $('presetSet').disabled=s.armed;
+}
+async function request(command=null, priority=false) {
+  if (!token) { message('Enter an API token and connect first.'); return; }
+  if (busy && !priority) return;
+  if (priority) { generation++; active?.abort(); busy=false; held=null; releasePending=false; owns=false; }
+  const mine=generation; const abort=new AbortController(); active=abort; busy=true;
+  const timeout=setTimeout(()=>abort.abort(),1800);
+  try {
+    const options={headers:{Authorization:`Bearer ${token}`},signal:abort.signal,cache:'no-store'};
+    if (command) {
+      if (!state && command.op!=='stop') throw Error('Connect before issuing commands.');
+      options.method='POST'; options.headers['Content-Type']='application/json';
+      options.body=JSON.stringify({...command,...(command.op==='stop'?{}:{epoch:state.epoch,seq:state.seq+1})});
+      options.keepalive=priority;
+    }
+    const response=await fetch(command?'/api/command':'/api/state',options);
+    const next=await response.json();
+    if (mine!==generation) return;
+    if (next.axes) render(next);
+    if (!response.ok) throw Error(next.result||next.error||`HTTP ${response.status}`);
+    if (command?.op==='arm') owns=true;
+    if (command && command.op!=='heartbeat' && command.op!=='jog') message(`${command.op}: ${next.result}`);
+    else if (!command) message('Connected. Position values are commanded estimates.');
+  } catch (error) {
+    if (mine===generation) {
+      message(`${error.message}. No command will be retried automatically.`);
+      held=null; releasePending=false;
+      if (owns) { owns=false; setTimeout(()=>request({op:'stop'},true),0); }
+    }
+  } finally {
+    clearTimeout(timeout);
+    if (mine===generation) {
+      busy=false; active=null;
+      if (releasePending) { releasePending=false; request({op:'jog',pan:0,tilt:0}); }
+    }
+  }
+}
+const numeric = id => { const value=$(id).valueAsNumber; if (!Number.isFinite(value)) throw Error(`Enter a valid ${id} angle`); return value; };
+function action(op, values=()=>({})) { return ()=> { if (busy) return message('Wait for the pending request, or use STOP.'); try { request({op,...values()}); } catch(e) {message(e.message);} }; }
+$('connect').onclick=()=>{ token=$('token').value; $('token').value=''; request(); };
+$('stop').onclick=()=>request({op:'stop'},true);
+$('reference').onclick=action('reference',()=>({pan:numeric('refPan'),tilt:numeric('refTilt')}));
+for (const op of ['arm','disarm','center']) $(op).onclick=action(op);
+for (const op of ['move','relative']) $(op).onclick=action(op,()=>({pan:numeric('pan'),tilt:numeric('tilt')}));
+$('presetMove').onclick=action('preset_move',()=>({slot:Number($('preset').value)}));
+$('presetSet').onclick=action('preset_set',()=>({slot:Number($('preset').value),pan:numeric('pan'),tilt:numeric('tilt')}));
+$('saveSettings').onclick=action('settings',()=>{ const value=JSON.parse($('settings').value); if (!value||Array.isArray(value)||typeof value!=='object'||'op' in value||'epoch' in value||'seq' in value) throw Error('Enter a settings object without command fields'); return value; });
+$('loadSettings').onclick=()=>{ if (!state) return; const value={commissioned:state.commissioned}; for (const [i,name] of ['pan','tilt'].entries()) {const a=state.axes[i]; Object.assign(value,{[name+'_steps']:a.motor_steps,[name+'_speed']:a.speed,[name+'_accel']:a.acceleration,[name+'_min']:a.minimum,[name+'_max']:a.maximum,[name+'_inverted']:a.inverted});} $('settings').value=JSON.stringify(value,null,2); };
+function release() { if (!held) return; held=null; if (busy) releasePending=true; else request({op:'jog',pan:0,tilt:0}); }
+for (const button of document.querySelectorAll('.jog')) {
+  const start=()=>{ if (held||busy||!state?.armed||state.stopped) return; held={op:'jog',pan:Number(button.dataset.pan),tilt:Number(button.dataset.tilt)}; request(held); };
+  button.onpointerdown=e=>{e.preventDefault();button.setPointerCapture(e.pointerId);start();};
+  button.onpointerup=release;button.onpointercancel=release;button.onlostpointercapture=release;
+  button.onkeydown=e=>{if ((e.key===' '||e.key==='Enter')&&!e.repeat){e.preventDefault();start();}};
+  button.onkeyup=e=>{if(e.key===' '||e.key==='Enter')release();};button.onblur=release;
+}
+function suspend() { if (owns||held) request({op:'stop'},true); held=null; }
+window.addEventListener('blur',suspend);window.addEventListener('pagehide',suspend);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)suspend();});
+setInterval(()=>{ if (busy||!state||document.hidden) return; if(held) request(held); else if(owns&&Date.now()-lastBeat>=1000){lastBeat=Date.now();request({op:'heartbeat'});} },150);
+setInterval(()=>{if(token&&!busy&&!document.hidden)request();},700);
+</script>
+</body></html>

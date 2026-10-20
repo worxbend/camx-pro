@@ -1,0 +1,42 @@
+category,item,quantity,nominal specification,status
+owned,Anker PowerConf C200 A3369,1,intact housing and original USB connection,owner model; manufacturer approximately55×51×41mm and83g; axis/clip fit pending
+owned,28BYJ-48 motor,2,5 V geared unipolar stepper,measure both units separately
+owned,ULN2003 module,2,4 driven channels per motor,verify pinout and board dimensions
+owned,ESP32 DevKit,1,ESP32-WROOM-32,verify exact board and connector
+owned,USB-C breakout,1,5 V sink only,verify CC and power pinout
+owned,Integration PCB,1,provisional 38 x 24 x 10 mm,measure populated board
+owned,Capacitors,as available,bulk and local decoupling,choose after rail measurements
+purchase,6809 bearing,2,45 x 58 x 7 mm,confirm fit before ordering
+purchase,688 bearing,7,8 x 16 x 5 mm,4 planets plus 1 sun and 2 tilt bearings
+purchase,Planet pin sleeves,4,steel8mm OD×3.2mm ID×14.5mm long,verify equal length and bearing fit
+purchase,Planet lower shims,4,11mm OD×8.2mm ID×0.2mm,inner race only
+purchase,Planet upper shims,4,11mm OD×8.2mm ID×6.7mm,inner race only
+purchase,Output adjustment shims,as fitted,matched inner and outer race contact,adjust measured stack without preload
+purchase,M3 low-profile carrier screws and nuts,4 each,M3×20; head≤Ø5.5×2mm; nuts AF≤5.8mm height≤2.5mm,verify head height and engagement
+purchase,M3 actuator mounting screws,4,nominal M3x45,verify depth through housing ring and base columns
+purchase,Sun grub screw and square nut,1 each,M2x12 screw; nominal 4 mm square nut,verify nut size and tool access
+purchase,M3 fasteners,assortment,base/carriers/platform/motor/clamps,measure lengths and engagement
+purchase,M2 fasteners,assortment,retainers/platform/caps/hatch,measure lengths and engagement
+purchase,Camera screw,1,1/4-20 only if factory socket verified,measure safe thread engagement
+purchase,Feet and camera pad,4 feet plus pad,non-slip elastomer,no adhesive on optics
+purchase,Insulating PCB supports and straps,as fitted,nonconductive edge retention,finalize after PCB measurements
+purchase,Regulated power source,1,5 V 2-3 A available with adequate cable,verify USB-C current capability
+purchase,Fuse and distribution wiring,as engineered,matched to measured load and wire rating,do not feed motor current through ESP32
+optional,Home sensors and targets,2,Hall or mechanical with defined reference,not modeled or commissioned in P3
+purchase,20T timing pulley,1,2mm pitch;5mm bore;hubX40.3–54;belt planeX58,procurement envelope; verify double-flat shaft clamp
+purchase,40T timing pulley,1,2mm pitch;8mm bore;hubX49–54;belt planeX58,procurement envelope; verify trunnion engagement
+purchase,Endless timing belt,1,160 mm pitch length x 4 mm width; matched pulley profile,verify supplier dimensions and tension
+printed,Named CAD parts,see manifest,separate connected parts plus fit coupon and cable clamps,generated count is authoritative
+purchase,Steel trunnions,2,Ø8×28mm;driveX27–55/passiveX−55–−27,measure tolerance and clamp grip
+purchase,Tilt inner spacers,2,Ø11 OD×Ø8.15 ID×2.1mm,contact actual inner race only
+purchase,Tilt outer spacers,2,Ø11 OD×Ø8.15 ID×3.9mm,contact actual inner race only
+purchase,Passive shaft collar,1,Ø16 envelope×5mm wide;8mm bore,verify set-screw envelope and shaft grip
+purchase,Output inner spacer,1,Ø48 OD×Ø45.15 ID×5mm,steel/aluminum or qualified printed equivalent; match actual inner race
+purchase,Planet cap screws and nuts,16 each,M1.6×4;head≤Ø3×1.2;square nut≤3.2×3.2×1.3mm,load nuts radially; verify actual head and thread engagement
+purchase,Motor/rear-cover through bolts,4,M3×25;head≤Ø5.5×2;captured M3 nuts,two drive-side bolts also clamp motor ears
+purchase,Cradle clamp screws and nuts,2 each,M3×20;nut AF≤5.8,verify PLA clamp coupon before torque
+purchase,Cable guide corner screws,4,M2×20;head≤Ø3.5×1.2,actual stack and pilot engagement must be measured
+purchase,Rotating cable ceiling screws,4,M2×8;head≤Ø3.5×1.2,two per removable ceiling half
+purchase,USB tray mounting screws,2,M2×26 nominal,27mm seat to4mm base top; confirm ≥3mm engagement
+purchase,Clamp liners,as fitted,thin compliant nonconductive pads,grip cable without crushing insulation
+purchase,PLA filament,as sliced,owner-selected;assumed0.4mm nozzle,calibrate fits and warm-duty creep
