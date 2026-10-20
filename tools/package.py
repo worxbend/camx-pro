@@ -180,12 +180,16 @@ def main():
                     archive.write(f, f.relative_to(ROOT))
         for name in ["README.md", "PLAN.md", "requirements.in", "requirements.txt", "requirements-audit.txt", "pyproject.toml"]:
             archive.write(ROOT / name, name)
-        for name in ["index.html", "package.json", "package-lock.json", "vite.config.js"]:
-            archive.write(ROOT / "viewer" / name, "viewer/" + name)
-        for f in (ROOT / "viewer/src").glob("*"):
-            archive.write(f, f.relative_to(ROOT))
-        for f in (ROOT / "viewer/scripts").glob("*"):
-            archive.write(f, f.relative_to(ROOT))
+        for name in ["package.json", "package-lock.json", "playwright.config.js"]:
+            archive.write(ROOT / name, name)
+        # Maintained application sources only; never include caches or staged binary downloads.
+        for directory in ["apps/site", "apps/remote", "apps/tui", "packages", "contracts"]:
+            for f in (ROOT / directory).rglob("*"):
+                relative = f.relative_to(ROOT)
+                if (f.is_file() and not any(part in {"node_modules", "dist", "out", "__pycache__", ".bsp", ".scala-build", "downloads"} for part in relative.parts)
+                        and f.name not in {".env", "credentials.h", "secrets.h"}
+                        and not f.name.startswith(".env.")):
+                    archive.write(f, relative)
     print("Created engineering.pdf, checksums.sha256 and camx-pro-prototype.zip")
 
 

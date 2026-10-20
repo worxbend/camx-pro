@@ -422,8 +422,12 @@ camx-pro/
     drawings.py                # dimensions, sections, BOM callouts
     export.py
   firmware/                    # stepper firmware and native-testable core
-  client/                      # adapted local browser remote
-  viewer/                      # actual CAD viewer and manufacturing previews
+  apps/
+    site/                      # project page, CAD viewer, manufacturing previews
+    remote/                    # Solid.js 2 browser remote
+    tui/                       # Scala/Glyphora terminal remote
+  packages/                    # shared browser protocol and localhost bridge
+  contracts/                   # language-independent API fixtures
   tests/                       # CAD, kinematics, firmware, transport
   tools/                       # render, validate, stage, package
   docs/                        # measurements, decisions, wiring, build guide

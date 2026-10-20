@@ -1,5 +1,5 @@
 // Browser exercises the real portable C++ controller through a local host fixture.
-import {chromium} from '../viewer/node_modules/playwright-core/index.mjs';
+import {chromium} from '@playwright/test';
 import {createServer} from 'node:http';
 import {spawn, execFileSync} from 'node:child_process';
 import {mkdtempSync, readFileSync, rmSync} from 'node:fs';

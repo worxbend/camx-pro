@@ -1,0 +1,32 @@
+{
+  "name": "camx-pro",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/site",
+    "apps/remote",
+    "packages/control",
+    "packages/bridge"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev:site": "npm run dev --workspace @camx/site",
+    "dev:remote": "npm run dev --workspace @camx/remote",
+    "build": "npm run build --workspace @camx/remote && npm run build --workspace @camx/site && node tools/build_pages.mjs",
+    "build:remote": "npm run build --workspace @camx/remote",
+    "bridge": "node packages/bridge/server.mjs",
+    "test": "node --test packages/control/test/*.test.mjs packages/bridge/*.test.mjs",
+    "test:browser": "playwright test",
+    "test:model": "node apps/site/scripts/verify-model.mjs",
+    "test:firmware-ui": "node tools/test_firmware_ui.mjs",
+    "format": "prettier --ignore-path .gitignore --write \"apps/**/*.{js,jsx,mjs,json,html,css}\" \"packages/**/*.{mjs,json}\" \"tests/web/*.js\" \"tools/{build_pages,test_server}.mjs\" package.json playwright.config.js .prettierrc.json",
+    "format:check": "prettier --ignore-path .gitignore --check \"apps/**/*.{js,jsx,mjs,json,html,css}\" \"packages/**/*.{mjs,json}\" \"tests/web/*.js\" \"tools/{build_pages,test_server}.mjs\" package.json playwright.config.js .prettierrc.json"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.55.1",
+    "prettier": "3.9.10"
+  }
+}

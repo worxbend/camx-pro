@@ -1,0 +1,16 @@
+package build
+import mill.*
+import mill.javalib.{DepSyntax, TestModule}
+import mill.scalalib.SbtModule
+object app extends SbtModule {
+  def scalaVersion = "3.9.0"
+  def scalacOptions = Seq("-deprecation", "-feature", "-unchecked", "-Wunused:all", "-Werror", "-release:25")
+  def repositories = Seq("https://repo.maven.apache.org/maven2")
+  def mvnDeps = Seq(mvn"com.worxbend::tui-dsl:0.20.0", mvn"com.lihaoyi::ujson:4.4.3")
+  def mainClass = Some("com.worxbend.camx.Main")
+  def forkArgs = Seq("--enable-native-access=ALL-UNNAMED")
+  object test extends SbtTests with TestModule.ScalaTest {
+    def mvnDeps = Seq(mvn"com.worxbend::tui-test:0.20.0", mvn"org.scalatest::scalatest:3.2.20")
+    def forkArgs = Seq("--add-modules=jdk.httpserver", "--enable-native-access=ALL-UNNAMED")
+  }
+}

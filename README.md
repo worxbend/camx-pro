@@ -6,6 +6,43 @@ Parametric, FDM-printable pan–tilt camera housing for an intact **Anker PowerC
 
 ![P3 CAD](docs/images/p3-three-quarter.png)
 
+## Website and remotes
+
+[Project page](https://worxbend.github.io/camx-pro/) · [3D CAD viewer](https://worxbend.github.io/camx-pro/viewer.html) · [Remote demo](https://worxbend.github.io/camx-pro/control/?demo=1)
+
+```sh
+npm ci
+npm run build:remote
+CAMX_DEVICE_URL=http://DEVICE_IP npm run bridge
+# Open http://127.0.0.1:4175/control/ and enter the configured API token.
+
+# Glyphora terminal remote (JDK 25)
+cd apps/tui
+./mill app.run --demo
+./mill app.run --url http://DEVICE_IP
+```
+
+The hosted remote is a simulation. Live operation uses a localhost bridge or the
+terminal client. Both require manual physical reference and explicit arming;
+no camera is automatically moved on connection. See [controller instructions](docs/controllers.md)
+and the [monorepo architecture](docs/architecture.md).
+
+To reproduce the complete website without rebuilding CAD:
+
+```sh
+python3 tools/site_assets.py fetch
+npm ci
+npm run build
+npm test
+npm run test:model
+node apps/site/scripts/verify-site.mjs
+npx playwright install chromium
+npm run test:browser
+```
+
+The site output is `apps/site/dist/`. [Pages deployment](docs/pages.md) publishes
+that tested artifact. Solid 2 is pinned to RC.16; Glyphora uses published 0.20.0.
+
 ## Design and printer
 
 - Pan: 20T sun, four 20T planets and fixed 60T ring; two independent 6809 bearings, captured planet bearings and located steel sleeves.
@@ -39,14 +76,14 @@ uv pip sync --python .venv/bin/python requirements-audit.txt
 .venv/bin/python -m tools.package
 .venv/bin/python -m tools.verify_preprint_package
 .venv/bin/python -m tools.stage_viewer
-npm --prefix viewer ci
-npm --prefix viewer run build
-node viewer/scripts/verify-model.mjs
+npm ci
+npm run build
+node apps/site/scripts/verify-model.mjs
 ```
 
 Replace the slicer path with an installed PrusaSlicer executable. Its included configuration audits geometry only; use Bambu Studio with the actual A1 mini/PLA profile for printing. Successful slicing does not prove strength or support removal. Packaging refuses missing, failed or stale CAD verification reports.
 
-Run `npm --prefix viewer run dev` for the local CAD viewer. It inspects the model and animates its mathematical joints; it cannot command physical motors. Rendering uses headless EGL/Mesa. Drawing and package tools produce SVG/PDF, actual-CAD PNGs, checksums and a reproducible ZIP.
+Run `npm --workspace @camx/site run dev` for the local CAD viewer. It inspects the model and animates its mathematical joints; it cannot command physical motors. Rendering uses headless EGL/Mesa. Drawing and package tools produce SVG/PDF, actual-CAD PNGs, checksums and a reproducible ZIP.
 
 ## Maintained files
 
@@ -55,7 +92,9 @@ Run `npm --prefix viewer run dev` for the local CAD viewer. It inspects the mode
 | `cad/` | Modular geometry, dimensions, provenance and cable centerlines |
 | `tests/`, `tools/` | Regression tests, geometry/motion/mesh/slice checks and exporters |
 | `docs/` | Closure register, measurements, assembly, BOM, wiring and control contract |
-| `viewer/` | Interactive Three.js CAD inspector |
+| `apps/site/` | Project page and interactive Three.js CAD inspector |
+| `apps/remote/`, `apps/tui/` | Solid.js 2 web remote and Scala/Glyphora terminal remote |
+| `packages/`, `contracts/` | Shared browser session, local bridge and API compatibility fixture |
 | `firmware/` | ESP32 stepper controller, browser remote and native C++ tests |
 | `references/`, root photos | Supplied hardware and appearance references |
 | `exports/` | Generated STEP/STL/3MF/GLB, SVG/PDF/PNG and validation evidence |
@@ -72,6 +111,6 @@ The [firmware guide](firmware/README.md) covers the WROOM-32 pinout, build/flash
 node tools/test_firmware_ui.mjs
 ```
 
-Read the [API](docs/firmware-api.md) and [software verification record](docs/firmware-verification.md). The public build contains no network credentials. No hardware was flashed or moved during development; loaded motion and thermal checks remain necessary. Existing camx/OBS clients need an API adapter. The P3 CAD archive is a separate historical manufacturing snapshot and does not include this firmware addition.
+Read the [API](docs/firmware-api.md) and [software verification record](docs/firmware-verification.md). The public build contains no network credentials. No hardware was flashed or moved during development; loaded motion and thermal checks remain necessary. The new remotes use this stepper API; existing camx/OBS clients still need an adapter. The P3 CAD archive is a separate historical manufacturing snapshot and does not include this firmware addition.
 
 `AGENTS.md` is preserved. Generated artifacts and local P2 backups are ignored by Git. The historical [P2 audit](docs/preprint-audit.md) documents why this revision was necessary; its coordinates and results are not P3 evidence.

@@ -1,0 +1,10 @@
+{
+  "name": "@camx/control",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./session.mjs",
+    "./demo": "./demo.mjs"
+  }
+}

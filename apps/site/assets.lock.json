@@ -1,0 +1,19 @@
+{
+  "url": "https://github.com/worxbend/camx-pro/releases/download/p3-web-assets/camx-pro-p3-web-assets.zip",
+  "bytes": 43051953,
+  "sha256": "7ecb3e5caf578dc11a6f0367b4e60cf3cb703bf3e638cc04c59e610e0e431086",
+  "cad_source_sha256": "e4c21f8d19f0f99686df31db197c5dc1f92c9f2122c89296a7542fc9b7d24460",
+  "files": [
+    "manifest.json",
+    "assembly/camx-pro.glb",
+    "assembly/camx-pro.step",
+    "assembly/planetary-actuator.step",
+    "engineering.pdf",
+    "camx-pro-prototype.zip",
+    "images/three_quarter.png",
+    "images/planetary_actuator.png",
+    "images/exploded.png",
+    "images/cutaway.png",
+    "images/electronics.png"
+  ]
+}

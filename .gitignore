@@ -45,7 +45,7 @@ firmware/include/web_ui.hpp
 # Reproducible CAD/printing exports and staged viewer downloads
 /exports/
 /release/
-/viewer/public/downloads/
+/apps/site/public/downloads/
 *.gcode
 
 # Private configuration; keep placeholder examples and dependency locks
@@ -70,3 +70,11 @@ Desktop.ini
 *.swo
 *~
 *.log
+
+# Scala/Mill generated output
+/apps/tui/out/
+.bsp/
+.scala-build/
+.metals/
+*.class
+*.jar

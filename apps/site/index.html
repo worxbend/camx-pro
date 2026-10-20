@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      name="description"
+      content="CAMX Pro: an open, printable PTZ camera with a planetary pan actuator, ESP32 firmware, web and terminal remotes. Explore the actual CAD and P3 prototype files."
+    />
+    <meta name="theme-color" content="#e7ece8" />
+    <title>CAMX Pro — A camera in motion</title>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="site-nav">
+      <a class="brand" href="./" aria-label="CAMX Pro home"
+        ><span class="mark">C<span>+</span></span> CAMX PRO</a
+      >
+      <nav aria-label="Main navigation">
+        <a href="#mechanism">The mechanism</a><a href="viewer.html">CAD viewer</a
+        ><a href="control/?demo=1">Remote demo</a
+        ><a href="https://github.com/worxbend/camx-pro">GitHub ↗</a>
+      </nav>
+    </header>
+    <main id="main">
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="overline">OPEN HARDWARE / P3 PROTOTYPE</p>
+          <h1>A new angle<br />on your camera.</h1>
+          <p class="lead">
+            Your Anker webcam. A printable U-frame. Two geared steppers that put the view in motion.
+          </p>
+          <div class="actions">
+            <a class="button primary" href="viewer.html">Explore the 3D assembly <span>↗</span></a
+            ><a class="text-link" href="#build">Build the prototype ↓</a>
+          </div>
+          <p class="prototype-note">
+            <span></span>Engineering fit prototype. Bench qualification remains open.
+          </p>
+        </div>
+        <figure class="hero-model">
+          <img
+            src="downloads/images/three_quarter.png"
+            alt="Actual P3 CAD: intact Anker webcam in a rounded U-shaped frame above a compact base"
+            width="1200"
+            height="1000"
+            fetchpriority="high"
+          />
+          <figcaption>ACTUAL CAD GEOMETRY <span>REVISION P3</span></figcaption>
+        </figure>
+      </section>
+      <div class="spec-strip">
+        <div><strong>4:1</strong><span>Planetary pan reduction</span></div>
+        <div><strong>2:1</strong><span>Concealed belt tilt</span></div>
+        <div><strong>180 mm</strong><span>A1 mini print envelope</span></div>
+        <div><strong>ESP32</strong><span>Local Wi-Fi control</span></div>
+      </div>
+      <section class="explore" id="explore">
+        <div class="section-head">
+          <div>
+            <p class="overline">INSPECT THE DESIGN</p>
+            <h2>Every part, in perspective.</h2>
+          </div>
+          <a class="text-link" href="viewer.html">Open full CAD viewer ↗</a>
+        </div>
+        <div class="preview" id="preview">
+          <img
+            src="downloads/images/cutaway.png"
+            alt="Transparent CAD cutaway showing the electronics and mechanical components"
+            width="1200"
+            height="1000"
+            loading="lazy"
+          />
+          <div class="preview-caption">
+            <h3>Get inside the assembly.</h3>
+            <p>
+              Orbit the model, inspect the planetary drive, and explore the target motion envelope.
+            </p>
+            <button class="button primary" id="load-viewer">
+              Load interactive preview <span>↗</span></button
+            ><small>Loads a 14 MB model. No motor connection.</small>
+          </div>
+        </div>
+      </section>
+      <section class="mechanism" id="mechanism">
+        <figure>
+          <img
+            src="downloads/images/planetary_actuator.png"
+            alt="CAD view of the coaxial planetary pan actuator, four planet gears and independent output bearings"
+            width="1200"
+            height="1000"
+            loading="lazy"
+          />
+          <figcaption>COAXIAL PAN ACTUATOR / 20T SUN + 60T RING</figcaption>
+        </figure>
+        <div>
+          <p class="overline">ENGINEERED AROUND YOUR HARDWARE</p>
+          <h2>Small motors.<br />A supported mechanism.</h2>
+          <p>
+            The pan motor sits inside the stationary base and drives a four-planet carrier. Two
+            output bearings carry the upper assembly independently of the motor shaft.
+          </p>
+          <p>
+            The tilt motor sits low behind the camera. A concealed 20T/40T belt drives the
+            bearing-supported cradle, keeping the U-frame clean and the original webcam intact.
+          </p>
+          <dl class="mechanical-details">
+            <div>
+              <dt>Motors</dt>
+              <dd>2 × 28BYJ-48, 5 V / ULN2003</dd>
+            </div>
+            <div>
+              <dt>Camera</dt>
+              <dd>Anker PowerConf C200, original USB</dd>
+            </div>
+            <div>
+              <dt>Target travel</dt>
+              <dd>Pan ±160° / tilt −30° to +90°</dd>
+            </div>
+            <div>
+              <dt>Initial firmware limits</dt>
+              <dd>Pan ±20° / tilt ±15°</dd>
+            </div>
+          </dl>
+          <a class="text-link" href="downloads/assembly/planetary-actuator.step"
+            >Download the actuator STEP ↗</a
+          >
+        </div>
+      </section>
+      <section class="control-section">
+        <div>
+          <p class="overline">THREE WAYS TO WORK</p>
+          <h2>From model<br />to movement.</h2>
+          <p>
+            The CAD inspector explores geometry. The web and terminal remotes control the ESP32 over
+            your local network. Webcam video stays on its own USB connection.
+          </p>
+        </div>
+        <div class="control-list">
+          <article>
+            <span>01</span>
+            <div>
+              <h3>Inspect the assembly</h3>
+              <p>Real CAD, part visibility, exploded views, and pan/tilt previews.</p>
+              <a href="viewer.html">Open the CAD viewer ↗</a>
+            </div>
+          </article>
+          <article>
+            <span>02</span>
+            <div>
+              <h3>Control from the browser</h3>
+              <p>
+                Solid.js 2 remote with presets, held jog, manual reference and latched STOP. The
+                hosted version is an offline demo.
+              </p>
+              <a href="control/?demo=1">Try the remote demo ↗</a>
+            </div>
+          </article>
+          <article>
+            <span>03</span>
+            <div>
+              <h3>Stay in the terminal</h3>
+              <p>
+                A Scala application built with Glyphora: bounded angle steps, presets and device
+                diagnostics.
+              </p>
+              <a href="https://github.com/worxbend/camx-pro/tree/main/apps/tui"
+                >Run the Glyphora remote ↗</a
+              >
+            </div>
+          </article>
+        </div>
+      </section>
+      <section id="build" class="build-section">
+        <div class="section-head">
+          <div>
+            <p class="overline">P3 MANUFACTURING SNAPSHOT</p>
+            <h2>Start at the workbench.</h2>
+          </div>
+          <a class="button primary" href="downloads/camx-pro-prototype.zip"
+            >Download prototype ZIP ↗</a
+          >
+        </div>
+        <div class="build-columns">
+          <div>
+            <h3>Print, measure, assemble.</h3>
+            <p>
+              47 printable parts, individual STL files, assembly STEP, geometry-only 3MF plates,
+              drawings and assembly instructions. The source is parametric Python + build123d.
+            </p>
+            <p>
+              Designed for the Bambu Lab A1 mini with PLA and an assumed 0.4 mm nozzle. Start with
+              the fit coupon and verify your actual camera, connectors and hardware before printing
+              the full assembly.
+            </p>
+            <div class="download-links">
+              <a href="downloads/assembly/camx-pro.step">Complete assembly STEP ↗</a
+              ><a href="downloads/engineering.pdf">Engineering drawings PDF ↗</a
+              ><a href="downloads/manifest.json">Dimensions & build manifest ↗</a>
+            </div>
+          </div>
+          <aside class="qualification">
+            <h3>What is verified?</h3>
+            <p>
+              Local geometry, mechanical interfaces, motion studies, meshes and print-layer checks
+              have corresponding P3 verification reports.
+            </p>
+            <h3>What still needs a bench?</h3>
+            <p>
+              Actual fit, loaded motor torque, cable behavior, PLA heat and creep. Digital checks do
+              not establish these. This is a fit prototype, not a production-qualified print
+              release.
+            </p>
+            <a href="https://github.com/worxbend/camx-pro/blob/main/docs/p3-verification.md"
+              >Read the verification record ↗</a
+            >
+          </aside>
+        </div>
+      </section>
+      <section class="docs-links">
+        <h2>Build with the source.</h2>
+        <a href="https://github.com/worxbend/camx-pro/blob/main/docs/assembly.md"
+          >Assembly guide ↗</a
+        ><a href="https://github.com/worxbend/camx-pro/tree/main/firmware">ESP32 firmware ↗</a
+        ><a href="https://github.com/worxbend/camx-pro/blob/main/docs/controllers.md"
+          >Controller guide ↗</a
+        ><a href="https://github.com/worxbend/camx-pro">Source repository ↗</a>
+      </section>
+    </main>
+    <footer>
+      <a class="brand" href="./">CAMX PRO</a><span>Open mechanical development by worxbend.</span
+      ><a href="https://github.com/worxbend/camx-pro/issues">Report an issue ↗</a>
+    </footer>
+    <script type="module" src="/src/landing.js"></script>
+  </body>
+</html>
