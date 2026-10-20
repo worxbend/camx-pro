@@ -25,6 +25,7 @@ cd apps/tui
 The hosted remote is a simulation. Live operation uses a localhost bridge or the
 terminal client. Both require manual physical reference and explicit arming;
 no camera is automatically moved on connection. See [controller instructions](docs/controllers.md)
+the [verification record](docs/controllers-verification.md),
 and the [monorepo architecture](docs/architecture.md).
 
 To reproduce the complete website without rebuilding CAD:

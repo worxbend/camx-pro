@@ -92,6 +92,8 @@ mechanism deliberately. Software STOP is not a hardware emergency-stop circuit.
 
 ## Verification and references
 
+See the [verification record and CI evidence](controllers-verification.md).
+
 `npm test` exercises session races, protocol validation, and bridge boundaries.
 `npm run test:browser` runs the actual Solid application against the portable
 C++ firmware simulator, plus Pages/viewer checks. Glyphora Pilot tests render and
