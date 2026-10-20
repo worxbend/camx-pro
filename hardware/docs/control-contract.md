@@ -2,8 +2,8 @@
 
 `../camx` was inspected read-only at
 `800f05acccf26577ddd18de381491bd0af53b88a`. Its local changes were preserved.
-The repository now also implements [ESP32 firmware](../firmware/README.md).
-See the [API](firmware-api.md) and [software verification](firmware-verification.md).
+The repository now also implements [ESP32 firmware](../../firmware/README.md).
+See the [API](../../firmware/docs/api.md) and [software verification](../../firmware/docs/verification.md).
 The CAD viewer remains separate and cannot command motors. No hardware was flashed.
 
 ## Implemented from the camx feature contract

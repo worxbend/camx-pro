@@ -21,9 +21,10 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - run: python3 tools/site_assets.py fetch
+      - run: python3 tools/website/assets.py fetch
       - run: npm ci
       - run: npm run format:check
+      - run: npm run test:assets
       - run: npm test
       - run: npm run build
       - run: npm run test:model
@@ -50,7 +51,7 @@ jobs:
         working-directory: apps/tui
       - run: java --enable-native-access=ALL-UNNAMED -jar out/app/assembly.dest/out.jar --demo --json
         working-directory: apps/tui
-      - run: python3 tools/test_tui_pty.py
+      - run: python3 apps/tui/scripts/test_pty.py
   deploy:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     needs: [web, tui]

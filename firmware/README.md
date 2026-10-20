@@ -15,27 +15,25 @@ From the repository root, use Python 3.10+ and PlatformIO 6.2.0:
 
 ```sh
 python -m pip install platformio==6.2.0
-python tools/firmware_contract.py --check
-python tools/test_firmware.py
+python3 tools/contracts/firmware.py --check
+python firmware/tools/test_native.py
 pio run -d firmware -e public
-python tools/check_firmware_variants.py
+python firmware/tools/check_variants.py
 ```
 
 Native checks require Clang with AddressSanitizer/UndefinedBehaviorSanitizer;
-`CXX=g++ python tools/test_firmware.py` selects GCC. PlatformIO pins
+`CXX=g++ python firmware/tools/test_native.py` selects GCC. PlatformIO pins
 Espressif32 6.12.0, Arduino-ESP32 2.0.17 and its package revision; the packaged
 SDK identifies itself as ESP-IDF 4.4.7. There are no third-party runtime libraries.
 The variant check uses temporary fake credentials and enables GPIO32 STOP in
 an isolated copy; it never reads private credentials, uploads or keeps its binary.
 
-Browser checks use the existing viewer's locked development dependency:
+Browser checks use the root npm workspace's locked development dependency:
 
 ```sh
-npm --prefix viewer ci
-cd viewer
+npm ci
 npx playwright install chromium
-cd ..
-node tools/test_firmware_ui.mjs
+npm run test:firmware-ui
 ```
 
 This runs the actual portable C++ controller behind a local browser fixture.
@@ -64,7 +62,7 @@ Clone-board labels and electrical behavior still need verification.
 
 Feed regulated 5 V directly to each driver and join grounds. Never feed
 motor current through the ESP32. Keep the camera USB path separate. Select one
-ESP32 power path while programming; see [power wiring](../docs/wiring.md).
+ESP32 power path while programming; see [power wiring](../hardware/docs/wiring.md).
 Verify that driver inputs remain inactive while the ESP32 resets; fit pull-downs
 if the actual modules leave those inputs floating.
 
@@ -161,7 +159,7 @@ acknowledgment; `center` moves to zero. Automatic sensor search is deliberately
 unimplemented. Adding it requires selected sensors, wiring, approach/back-off,
 debounce, travel/time limits, stuck-sensor detection and hardware tests.
 
-See [API and migration](../docs/firmware-api.md) and
-[local validation](../docs/firmware-verification.md). Existing camx servo clients
+See [API and migration](docs/api.md) and
+[local validation](docs/verification.md). Existing camx servo clients
 need an adapter for this versioned command protocol; OBS integration is through
 that host-side API adapter, not a video or OBS plugin inside the ESP32.

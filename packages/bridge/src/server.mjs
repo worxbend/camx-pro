@@ -51,7 +51,7 @@ export async function createControlServer({ deviceUrl = '', directory, port = 41
         'CAMX_DEVICE_URL must be an HTTP(S) device origin without credentials, query, or path',
       );
   }
-  const base = directory ?? fileURLToPath(new URL('../../apps/remote/dist/', import.meta.url));
+  const base = directory ?? fileURLToPath(new URL('../../../apps/remote/dist/', import.meta.url));
   const server = http.createServer(async (req, res) => {
     const send = (code, message) => {
       if (!res.headersSent && !res.destroyed) {

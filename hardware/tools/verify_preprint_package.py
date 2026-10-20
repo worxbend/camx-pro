@@ -9,7 +9,7 @@ from zipfile import ZipFile
 
 import numpy as np
 import trimesh
-from cad.config import source_digest
+from cad.config import ROOT, source_digest
 
 OUT = Path("exports")
 NS = {"m": "http://schemas.microsoft.com/3dmanufacturing/core/2015/02"}
@@ -48,11 +48,18 @@ def main():
         checksums += 1
     with ZipFile(OUT / "camx-pro-prototype.zip") as archive:
         assert archive.testzip() is None
-        assert json.loads(archive.read("exports/manifest.json")) == m
+        # Published P3 archives retain their old standalone layout; new packages
+        # mirror the monorepo. Check source bytes in either layout, never zero files.
+        prefix = "hardware/" if "hardware/exports/manifest.json" in archive.namelist() else ""
+        assert json.loads(archive.read(prefix + "exports/manifest.json")) == m
         source_files = [name for name in archive.namelist()
-                        if name.startswith("cad/") and Path(name).is_file()]
+                        if name.startswith(prefix + "cad/") and Path(name).suffix in {".py", ".json"}]
+        expected = {prefix + "cad/" + path.name for path in (ROOT / "cad").iterdir()
+                    if path.suffix in {".py", ".json"}}
+        assert set(source_files) == expected, "Missing or unexpected archived CAD source"
         for name in source_files:
-            assert archive.read(name) == Path(name).read_bytes(), name
+            local = ROOT / name.removeprefix(prefix)
+            assert archive.read(name) == local.read_bytes(), name
     printed = {n: p for n, p in m["parts"].items() if p["printed"]}
     plate_parts, plates = [], []
     margin = m["parameters"]["printer"]["margin"]

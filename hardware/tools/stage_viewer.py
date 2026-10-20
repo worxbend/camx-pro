@@ -6,7 +6,7 @@ from cad.config import ROOT
 
 def main():
     source=ROOT/"exports"
-    dest=ROOT/"apps/site/public/downloads"
+    dest=ROOT.parent/"apps/site/public/downloads"
     # This ignored directory is generated only. Do not retain obsolete P0 parts.
     if dest.exists():
         shutil.rmtree(dest)

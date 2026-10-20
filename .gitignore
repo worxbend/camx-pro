@@ -43,7 +43,7 @@ firmware/include/web_ui.hpp
 *.map
 
 # Reproducible CAD/printing exports and staged viewer downloads
-/exports/
+/hardware/exports/
 /release/
 /apps/site/public/downloads/
 *.gcode

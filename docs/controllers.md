@@ -1,6 +1,6 @@
 # Camera remotes
 
-Both remotes target [CAMX Pro API v1](firmware-api.md), including the 4:1 external
+Both remotes target [CAMX Pro API v1](../firmware/docs/api.md), including the 4:1 external
 pan planetary and 2:1 tilt belt. The firmware converts degrees to geared
 half-steps; clients do not multiply by either ratio. They control motion only.
 The webcam's USB video remains separate.

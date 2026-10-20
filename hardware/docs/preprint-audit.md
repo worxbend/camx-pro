@@ -147,6 +147,7 @@ not contain this subsequent audit. Do not regenerate it as a release until the
 findings are resolved.
 
 ```sh
+cd hardware  # from the repository root after the monorepo migration
 uv pip sync --python .venv/bin/python requirements-audit.txt
 .venv/bin/python -m pip check
 .venv/bin/python -m pytest -q

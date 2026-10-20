@@ -7,7 +7,7 @@ import shutil
 import subprocess
 import tempfile
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def main():
@@ -22,10 +22,10 @@ def main():
         fixture = Path(directory)
         shutil.copytree(ROOT / "firmware", fixture / "firmware",
                         ignore=shutil.ignore_patterns(".pio", "credentials.h", "web_ui.hpp"))
-        (fixture / "cad").mkdir()
-        (fixture / "tools").mkdir()
-        shutil.copyfile(ROOT / "cad/parameters.json", fixture / "cad/parameters.json")
-        shutil.copyfile(ROOT / "tools/firmware_contract.py", fixture / "tools/firmware_contract.py")
+        (fixture / "hardware/cad").mkdir(parents=True)
+        (fixture / "tools/contracts").mkdir(parents=True)
+        shutil.copyfile(ROOT / "hardware/cad/parameters.json", fixture / "hardware/cad/parameters.json")
+        shutil.copyfile(ROOT / "tools/contracts/firmware.py", fixture / "tools/contracts/firmware.py")
         (fixture / "firmware/include/credentials.h").write_text(
             '#pragma once\nconstexpr char WIFI_SSID[] = "CAMX-COMPILE-FIXTURE";\n'
             'constexpr char WIFI_PASSWORD[] = "not-a-real-password";\n'

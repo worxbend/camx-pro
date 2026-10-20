@@ -9,7 +9,7 @@ performed or mechanical/thermal qualification inferred from compilation.
 
 | Check | Result |
 |---|---|
-| CAD/firmware contract | Generated ratios, travel envelope, nominal step count and motion ceilings match `cad/parameters.json` |
+| CAD/firmware contract | Generated ratios, travel envelope, nominal step count and motion ceilings match `hardware/cad/parameters.json` |
 | Native C++ suites | Five executables pass with Clang, `-Wall -Wextra -Wpedantic -Werror`, AddressSanitizer and UndefinedBehaviorSanitizer |
 | Motion stress | 300 deterministic randomized dual-axis trajectories; 196,435 emitted half-steps |
 | Timing/trajectory invariants | 230–270 µs jitter and 251 µs ticks; step interval ≥1250 µs, acceleration/speed bounds, phase/reversal, limits, final positions and 64-bit clock crossing checked |
@@ -47,7 +47,7 @@ that every possible device failure has been eliminated.
 
 ## Reproduce and identify this build
 
-Run the commands in the [firmware guide](../firmware/README.md).
+Run the commands in the [firmware guide](../README.md).
 The public build is `firmware/.pio/build/public/firmware.bin`; it contains no
 network credentials and requires a configured local build for Wi-Fi control.
 
@@ -58,7 +58,7 @@ b3c4518cdcb9ab9f7a5f4a1709ae46f4b30dd54498f1db289f96457b75044023
 ```
 
 Maintained source fingerprint, covering the 23 nonignored files under
-`firmware/`, `cad/parameters.json` and the four new firmware test/contract tools:
+`firmware/`, `hardware/cad/parameters.json` and the four new firmware test/contract tools:
 
 ```text
 82e301eccfeef5212a65550e5d535590573933a5abd8e06ea2d7d4bbc64cacd6

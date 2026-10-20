@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { Session, validateState, httpTransport } from '../session.mjs';
-import { demoTransport, initialState } from '../demo.mjs';
+import { Session, validateState, httpTransport } from '../src/session.mjs';
+import { demoTransport, initialState } from '../src/demo.mjs';
 const fixture = JSON.parse(
   readFileSync(new URL('../../../contracts/state-v1.json', import.meta.url)),
 );

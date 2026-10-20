@@ -87,12 +87,12 @@ appearance, then historical CAMX assumptions.
 | Reference | Observation and design consequence |
 | --- | --- |
 | [Hardware overview](references/hardware-overview.png), supplied Image #1 | Two geared steppers, an ESP32-form-factor board, driver-board hardware, and a small connector breakout. One green board is shown from its reverse; its identity and wiring cannot be confirmed from that face. |
-| [Motor close-up 1](photo_6_2026-10-20_11-12-44.jpg) | Label visibly identifies a 28BYJ-48, 5 V DC motor. |
-| [Motor close-up 2](photo_7_2026-10-20_11-12-44.jpg) | A second 28BYJ-48, 5 V DC motor has different markings. Measure and characterize each independently. |
-| [Camera side](photo_4_2026-10-20_11-12-44.jpg) | Rounded Anker housing with ventilation and original folding clip. Preserve these features and their clearances. |
-| [Camera front](photo_5_2026-10-20_11-12-44.jpg) | Square rounded face, lens, openings, indicator, and markings for 2K and adjustable FOV. Do not obscure the front or privacy controls. |
+| [Motor close-up 1](references/photos/photo_6_2026-10-20_11-12-44.jpg) | Label visibly identifies a 28BYJ-48, 5 V DC motor. |
+| [Motor close-up 2](references/photos/photo_7_2026-10-20_11-12-44.jpg) | A second 28BYJ-48, 5 V DC motor has different markings. Measure and characterize each independently. |
+| [Camera side](references/photos/photo_4_2026-10-20_11-12-44.jpg) | Rounded Anker housing with ventilation and original folding clip. Preserve these features and their clearances. |
+| [Camera front](references/photos/photo_5_2026-10-20_11-12-44.jpg) | Square rounded face, lens, openings, indicator, and markings for 2K and adjustable FOV. Do not obscure the front or privacy controls. |
 | [Primary styling reference](references/ptz-design-reference.png), supplied Image #2 | Low rounded base, recessed rotating platform, continuous U-shaped support, concealed pivots, restrained seams. Apply these proportions around the real Anker body. |
-| [Additional PTZ reference](photo_3_2026-10-20_11-12-44.jpg) | Symmetric enclosed yoke and integrated base. Its advertising claims, display, and tally light are not project requirements. |
+| [Additional PTZ reference](references/photos/photo_3_2026-10-20_11-12-44.jpg) | Symmetric enclosed yoke and integrated base. Its advertising claims, display, and tally light are not project requirements. |
 
 The two supplied PNGs are preserved locally so this prompt does not depend on
 temporary attachment paths. Historical `../camx/photo_9_...jpg` and
@@ -405,22 +405,29 @@ dummy load → real camera. Record unperformed checks as pending, never passed.
 ## 9. Parametric CAD implementation
 
 Keep hardware definitions, structure, cosmetic shells, kinematics and export
-logic separate. Proposed layout:
+logic separate. The implemented monorepo groups the mechanical project under
+`hardware/`; run the Python commands below from that directory. Current layout:
 
 ```text
 camx-pro/
-  PLAN.md
-  references/                  # preserved supplied references
-  cad/
-    parameters.json            # dimensions, fits, materials, limits, ratios
-    parameter_sources.json     # provenance, uncertainty, verification state
-    hardware.py                # measured non-print component envelopes
-    joints.py                  # reusable bearings, couplings and fasteners
-    transmissions.py           # manufacturable gear/pulley geometry
-    parts/                     # base, pan, yoke, cradle, covers, carriers
-    assembly.py                # joint tree, datums, component placement
-    drawings.py                # dimensions, sections, BOM callouts
-    export.py
+  hardware/
+    PLAN.md
+    references/                # supplied references and photos/
+    cad/
+      parameters.json          # dimensions, fits, materials, limits, ratios
+      parameter_sources.json   # provenance, uncertainty, verification state
+      hardware.py              # non-print component envelopes
+      interfaces.py            # shared bearing, coupling and fastener datums
+      transmissions.py         # manufacturable gear/pulley geometry
+      base.py, yoke.py, ...     # structural and enclosure modules
+      assembly.py              # joint tree, datums, component placement
+      export.py
+    tests/                     # mechanical and audit-tool regressions
+    tools/                     # drawings, rendering, validation, packaging
+    docs/                      # measurements, wiring, assembly, verification
+    exports/                   # generated parts, drawings, renders (ignored)
+    pyproject.toml
+    requirements*.txt          # pinned Python environments
   firmware/                    # stepper firmware and native-testable core
   apps/
     site/                      # project page, CAD viewer, manufacturing previews
@@ -428,10 +435,10 @@ camx-pro/
     tui/                       # Scala/Glyphora terminal remote
   packages/                    # shared browser protocol and localhost bridge
   contracts/                   # language-independent API fixtures
-  tests/                       # CAD, kinematics, firmware, transport
-  tools/                       # render, validate, stage, package
-  docs/                        # measurements, decisions, wiring, build guide
-  exports/                     # generated parts, assembly, drawings, renders
+  tests/integration/           # browser and firmware-backed API scenarios
+  tools/                       # shared contract and website automation
+  docs/                        # monorepo architecture and controller operation
+  Makefile                     # root development entry points
 ```
 
 Requirements:

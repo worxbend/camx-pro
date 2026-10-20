@@ -20,10 +20,10 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install platformio==6.2.0
-      - run: python tools/firmware_contract.py --check
-      - run: python tools/test_firmware.py
+      - run: python tools/contracts/firmware.py --check
+      - run: python firmware/tools/test_native.py
       - run: pio run -d firmware -e public
-      - run: python tools/check_firmware_variants.py
+      - run: python firmware/tools/check_variants.py
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
@@ -31,7 +31,7 @@ jobs:
           cache-dependency-path: package-lock.json
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - run: node tools/test_firmware_ui.mjs
+      - run: node firmware/tools/test_ui.mjs
   cad:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
@@ -40,17 +40,26 @@ jobs:
         with:
           persist-credentials: false
       - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
-      - run: uv venv --python 3.14 .venv
-      - run: uv pip sync --python .venv/bin/python requirements-audit.txt
+      - run: uv venv --python 3.14 hardware/.venv
+      - run: uv pip sync --python hardware/.venv/bin/python hardware/requirements-audit.txt
       - run: .venv/bin/python -m pytest -q
+        working-directory: hardware
       - run: .venv/bin/python -m cad.export
+        working-directory: hardware
       - run: .venv/bin/python -m tools.prepare_print_plates
+        working-directory: hardware
       - run: .venv/bin/python -m tools.validate_artifacts
+        working-directory: hardware
       - run: .venv/bin/python -m tools.verify_mechanical_interfaces
+        working-directory: hardware
       - run: .venv/bin/python -m tools.verify_parameters_and_loads
+        working-directory: hardware
       - run: .venv/bin/python -m tools.verify_dense_motion
+        working-directory: hardware
       - run: .venv/bin/python -m tools.verify_cable_routing
+        working-directory: hardware
       - run: .venv/bin/python -m tools.validate_motion
+        working-directory: hardware
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
@@ -58,5 +67,6 @@ jobs:
           cache-dependency-path: package-lock.json
       - run: npm ci
       - run: .venv/bin/python -m tools.stage_viewer
+        working-directory: hardware
       - run: node apps/site/scripts/verify-model.mjs
       - run: npm run build --workspace @camx/site

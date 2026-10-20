@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
-import { createControlServer, privateAddress } from './server.mjs';
+import { createControlServer, privateAddress } from '../src/server.mjs';
 const start = (server) =>
   new Promise((resolve) => server.listen(0, '127.0.0.1', () => resolve(server.address().port)));
 const close = (server) =>

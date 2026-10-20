@@ -9,9 +9,9 @@ import tempfile
 import urllib.request
 import zipfile
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from cad.config import source_digest  # stdlib-only configuration, no CAD kernel
+from hardware.cad.config import source_digest  # stdlib-only configuration, no CAD kernel
 
 LOCK = ROOT / "apps/site/assets.lock.json"
 FILES = (
@@ -23,7 +23,7 @@ FILES = (
 
 
 def pack():
-    source = ROOT / "exports"
+    source = ROOT / "hardware/exports"
     manifest = json.loads((source / "manifest.json").read_text())
     if manifest["cad_source_sha256"] != source_digest():
         raise ValueError("Exports are stale; rebuild and verify the CAD before publishing.")

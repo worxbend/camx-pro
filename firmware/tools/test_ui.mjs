@@ -8,7 +8,7 @@ import {join, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createInterface} from 'node:readline';
 import assert from 'node:assert/strict';
-const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
+const root=resolve(fileURLToPath(new URL('../..',import.meta.url)));
 const temp=mkdtempSync(join(tmpdir(),'camx-ui-'));
 const binary=join(temp,'simulator');
 execFileSync(process.env.CXX||'clang++',['-std=c++17','-Wall','-Wextra','-Werror','-fsanitize=address,undefined','-I',join(root,'firmware/include'),join(root,'firmware/tests/simulator.cpp'),'-o',binary]);

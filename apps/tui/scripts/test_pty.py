@@ -10,7 +10,7 @@ import termios
 import time
 
 root = Path(__file__).resolve().parents[1]
-jar = root / 'apps/tui/out/app/assembly.dest/out.jar'
+jar = root / 'out/app/assembly.dest/out.jar'
 master, slave = pty.openpty()
 fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack('HHHH', 34, 120, 0, 0))
 before = termios.tcgetattr(slave)

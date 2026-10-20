@@ -40,7 +40,7 @@ technical information uses simple lists and tables instead of repeated cards.
 
 The Pages build downloads a versioned CAD asset bundle from this repository's
 GitHub release. `apps/site/assets.lock.json` pins the URL, byte count, SHA-256 and
-CAD source fingerprint. `tools/site_assets.py` verifies these before staging
+CAD source fingerprint. `tools/website/assets.py` verifies these before staging
 an allowlisted set of model, manifest, CAD renders and prototype downloads.
 Credentials, compiled firmware and arbitrary export-directory contents are
 never included. The website build fails if the CAD source no longer matches.
@@ -53,7 +53,7 @@ versioned asset bundle; never replace a release asset under an existing lock.
 ## Local build
 
 ```sh
-python tools/site_assets.py fetch
+python3 tools/website/assets.py fetch
 npm ci
 npm run build
 node apps/site/scripts/verify-site.mjs

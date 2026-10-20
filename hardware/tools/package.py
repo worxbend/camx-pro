@@ -15,6 +15,7 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 from build123d import export_step, import_step
 from cad.assembly import build, compound
 from cad.config import ROOT, load, source_digest
+from tools.source_archive import maintained_sources
 
 OUT = ROOT / "exports"
 STYLES = getSampleStyleSheet()
@@ -171,25 +172,12 @@ def main():
              f.name not in ["camx-pro-prototype.zip", "checksums.sha256", "package-integrity.json"]]
     (OUT / "checksums.sha256").write_text("".join(
         f"{hashlib.sha256(f.read_bytes()).hexdigest()}  {f.relative_to(OUT)}\n" for f in sorted(files)))
+    repo = ROOT.parent
     with ZipFile(OUT / "camx-pro-prototype.zip", "w", ZIP_DEFLATED) as archive:
         for f in files + [OUT / "checksums.sha256"]:
-            archive.write(f, f.relative_to(ROOT))
-        for directory in ["cad", "tools", "tests", "docs"]:
-            for f in (ROOT / directory).rglob("*"):
-                if f.is_file() and "__pycache__" not in f.parts:
-                    archive.write(f, f.relative_to(ROOT))
-        for name in ["README.md", "PLAN.md", "requirements.in", "requirements.txt", "requirements-audit.txt", "pyproject.toml"]:
-            archive.write(ROOT / name, name)
-        for name in ["package.json", "package-lock.json", "playwright.config.js"]:
-            archive.write(ROOT / name, name)
-        # Maintained application sources only; never include caches or staged binary downloads.
-        for directory in ["apps/site", "apps/remote", "apps/tui", "packages", "contracts"]:
-            for f in (ROOT / directory).rglob("*"):
-                relative = f.relative_to(ROOT)
-                if (f.is_file() and not any(part in {"node_modules", "dist", "out", "__pycache__", ".bsp", ".scala-build", "downloads"} for part in relative.parts)
-                        and f.name not in {".env", "credentials.h", "secrets.h"}
-                        and not f.name.startswith(".env.")):
-                    archive.write(f, relative)
+            archive.write(f, f.relative_to(repo))
+        for f in maintained_sources(repo):
+            archive.write(f, f.relative_to(repo))
     print("Created engineering.pdf, checksums.sha256 and camx-pro-prototype.zip")
 
 
