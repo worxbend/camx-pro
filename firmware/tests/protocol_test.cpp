@@ -203,9 +203,53 @@ int main() {
         CHECK(!d.lastPose.valid);
         // Narrowing the limits drops a pose that falls outside them.
         CHECK(send(d, R"("op":"reference","pan":10,"tilt":0)", now) == camx::Error::Ok);
+        CHECK(send(d, R"("op":"arm")", now) == camx::Error::Ok);
         CHECK(send(d, R"("op":"disarm")", now) == camx::Error::Ok);
         CHECK(d.lastPose.valid && std::abs(d.lastPose.pan - 10) < 0.02); // quantized to a step
         CHECK(send(d, R"("op":"settings","pan_max":5)", now) == camx::Error::Ok);
+        CHECK(!d.lastPose.valid);
+    }
+
+    // A stored hint survives releases of motors that were never armed, survives a STOP at rest
+    // (holding torque keeps the position), and is erased before the coils energize.
+    {
+        camx::Device d(850);
+        uint64_t now = 0;
+        d.lastPose = {3, 1, true};
+        CHECK(send(d, R"("op":"disarm")", now) == camx::Error::Ok); // e.g. a safety release
+        CHECK(d.lastPose.valid && d.lastPose.pan == 3 && !d.dirty);
+        // prepareArm() only fires for an `arm` that will be accepted. A packet views its text,
+        // so the text is kept alive by the caller.
+        auto arm = [&](std::string &text, uint32_t seqOffset) {
+            const auto s = d.controller.state();
+            text = "{\"op\":\"arm\",\"epoch\":" + std::to_string(s.epoch) +
+                   ",\"seq\":" + std::to_string(s.sequence + seqOffset) + "}";
+            camx::Packet packet;
+            CHECK(camx::parsePacket(text, packet));
+            return packet;
+        };
+        std::string text, acceptedText;
+        CHECK(!d.prepareArm(arm(text, 1))); // not referenced: arm would fail, keep the hint
+        CHECK(send(d, R"("op":"reference","pan":3,"tilt":1)", now) == camx::Error::Ok);
+        CHECK(!d.prepareArm(arm(text, 0))); // stale sequence
+        camx::Packet move;
+        CHECK(camx::parsePacket(R"({"op":"move","epoch":1,"seq":9,"pan":1,"tilt":1})", move));
+        CHECK(!d.prepareArm(move));
+        CHECK(d.lastPose.valid);
+        const auto accepted = arm(acceptedText, 1);
+        CHECK(d.prepareArm(accepted) && !d.lastPose.valid && d.dirty);
+        CHECK(d.execute(accepted, now) == camx::Error::Ok && d.controller.state().armed);
+        d.dirty = false;
+        CHECK(!d.prepareArm(arm(text, 1))); // already armed
+        CHECK(send(d, R"("op":"move","pan":5,"tilt":1)", now) == camx::Error::Ok);
+        advance(d, now, 3);
+        CHECK(d.execute(R"({"op":"stop"})", now) == camx::Error::Ok); // at rest: still trusted
+        CHECK(d.controller.state().referenced);
+        CHECK(send(d, R"("op":"disarm")", now) == camx::Error::Ok);
+        CHECK(d.lastPose.valid && std::abs(d.lastPose.pan - 5) < 0.02 && d.dirty);
+        // Arming without the adapter's prepareArm() still clears the hint in RAM.
+        CHECK(send(d, R"("op":"reference","pan":5,"tilt":1)", now) == camx::Error::Ok);
+        CHECK(send(d, R"("op":"arm")", now) == camx::Error::Ok);
         CHECK(!d.lastPose.valid);
     }
 

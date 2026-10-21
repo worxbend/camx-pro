@@ -154,6 +154,8 @@ int main() {
     rejected("jerk above the ceiling", [&](auto &x) { put(x, axis0Jerk, 501); });
     rejected("name with a control character", [&](auto &x) { x[presetName(2) + 1] = 7; });
     rejected("name with a high byte", [&](auto &x) { x[presetName(2) + 1] = 0xC3; });
+    rejected("name with a quote", [&](auto &x) { x[presetName(2) + 1] = '"'; });
+    rejected("name with a backslash", [&](auto &x) { x[presetName(2) + 1] = '\\'; });
     rejected("name with data after the terminator", [&](auto &x) { x[presetName(2) + 6] = 'x'; });
     rejected("name on an empty slot", [&](auto &x) { x[presetName(0)] = 'x'; });
     rejected("preset outside the limits", [&](auto &x) { put(x, presetPan(2), 91); });

@@ -152,6 +152,14 @@ int main() {
             const double vLimit = state.v + (state.a > 0 ? state.a * state.a / (2 * l.jerk) : 0);
             audit(stop, l, aLimit, vLimit, rng);
             CHECK(stop.distance() <= d - state.x + 1e-6 * (1 + d));
+            // Braking with higher ceilings than the move used (a synchronized axis brakes with
+            // its unstretched ones) is quicker and still never needs more room.
+            const Limits harder{l.velocity, l.acceleration * uniform(1, 30),
+                                l.jerk * uniform(1, 900)};
+            Profile firm;
+            CHECK(firm.planStop(state.v, state.a, harder));
+            CHECK(firm.distance() <= stop.distance() + 1e-6 * (1 + d));
+            CHECK(firm.duration() <= stop.duration() + 1e-9);
             ++stops;
             jerkPhase += state.a != 0;
         }

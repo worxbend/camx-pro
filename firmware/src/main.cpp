@@ -89,6 +89,20 @@ void snapshot(camx::Device &copy) {
     xSemaphoreGive(motorMutex);
 }
 
+// Writes the settings blob. Only the loop task calls this, and only with the motors released;
+// the timer cannot arm the device.
+bool persistSettings() {
+    snapshot(scratch);
+    const auto blob = camx::encodeSettings(scratch);
+    storageOk =
+        nvsOpen && preferences.putBytes("settings", blob.data(), blob.size()) == blob.size();
+    xSemaphoreTake(motorMutex, portMAX_DELAY);
+    if (storageOk)
+        device.dirty = false;
+    xSemaphoreGive(motorMutex);
+    return storageOk;
+}
+
 camx::Error execute(std::string_view body) {
     camx::Packet packet;
     if (!camx::parsePacket(body, packet))
@@ -98,6 +112,13 @@ camx::Error execute(std::string_view body) {
     const auto *op = packet.get("op");
     const bool blocked = board::stopPin >= 0 && physicalStopWasOpen && op && op->text != "stop" &&
                          op->text != "disarm" && op->text != "state";
+    // Erase the last-pose hint from flash while the coils are still off (Device::prepareArm).
+    // A failed write is reported through storage_ok; arming still proceeds.
+    if (!blocked && device.prepareArm(packet)) {
+        xSemaphoreGive(motorMutex);
+        persistSettings();
+        xSemaphoreTake(motorMutex, portMAX_DELAY);
+    }
     if (blocked)
         result = camx::Error::Stopped;
     else
@@ -105,19 +126,8 @@ camx::Error execute(std::string_view body) {
     applyCoils();
     bool persist = result == camx::Error::Ok && device.dirty && !device.controller.state().armed;
     xSemaphoreGive(motorMutex);
-    if (persist) {
-        // The loop task is the sole command writer. Timer cannot arm the device.
-        snapshot(scratch);
-        const auto blob = camx::encodeSettings(scratch);
-        storageOk =
-            nvsOpen && preferences.putBytes("settings", blob.data(), blob.size()) == blob.size();
-        xSemaphoreTake(motorMutex, portMAX_DELAY);
-        if (storageOk)
-            device.dirty = false;
-        xSemaphoreGive(motorMutex);
-        if (!storageOk)
-            result = camx::Error::Storage;
-    }
+    if (persist && !persistSettings())
+        result = camx::Error::Storage;
     return result;
 }
 

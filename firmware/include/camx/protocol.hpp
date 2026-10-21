@@ -11,12 +11,12 @@ struct Preset {
     bool valid = false;
     char name[presetNameCapacity + 1] = {};
 };
-// Names are printable ASCII only, so they can be written into JSON without escaping.
+// Names are printable ASCII without '"' and '\\', so they can be written into JSON as is.
 inline bool validPresetName(std::string_view name) {
     if (name.size() > presetNameCapacity)
         return false;
     for (char c : name)
-        if (c < 0x20 || c > 0x7e)
+        if (c < 0x20 || c > 0x7e || c == '"' || c == '\\')
             return false;
     return true;
 }
@@ -96,8 +96,12 @@ class Device {
             return preset(name, p, now);
         if (!p.only({"op", "epoch", "seq"}))
             return Error::Invalid;
-        if (name == "arm")
-            return controller.arm(now);
+        if (name == "arm") {
+            const Error armed = controller.arm(now);
+            if (armed == Error::Ok)
+                forgetPose(); // see prepareArm()
+            return armed;
+        }
         if (name == "disarm") {
             rememberPose();
             controller.disarm();
@@ -106,6 +110,22 @@ class Device {
         if (name == "heartbeat")
             return Error::Ok;
         return Error::Invalid; // No fake sensor homing or legacy servo calibration.
+    }
+    // Called by the adapter before executing `arm`: true when the stored last pose must be
+    // erased from flash first. Once the coils energize, a reset could leave the mechanism
+    // anywhere, so a hint from before this session must not survive in flash. Only an `arm`
+    // that would succeed (authorized, referenced, released, not latched) clears it.
+    bool prepareArm(const Packet &p) {
+        uint32_t epoch = 0, seq = 0;
+        const auto *op = p.get("op");
+        const auto s = controller.state();
+        if (!op || op->type != Field::Type::Text || op->text != "arm" ||
+            !p.only({"op", "epoch", "seq"}) || !p.integer("epoch", epoch) ||
+            !p.integer("seq", seq) || !controller.wouldAuthorize(epoch, seq) || s.armed ||
+            !s.referenced || s.stopped || !lastPose.valid)
+            return false;
+        forgetPose();
+        return true;
     }
     bool validPreset(const Preset &p) const {
         const auto c = controller.config();
@@ -146,11 +166,15 @@ class Device {
         name = field->text;
         return true;
     }
-    // Remember the resting pose, but only when it is a position the firmware trusts.
+    // Releasing an armed session records where it rested, if the position is still trusted
+    // (referenced and at rest; a STOP at rest keeps holding torque, so it still is). Releasing
+    // motors that were not armed changes nothing, so a stored hint survives a reboot.
     void rememberPose() {
         const auto s = controller.state();
+        if (!s.armed)
+            return;
         Pose pose;
-        if (s.referenced && s.fault == Error::Ok && !s.moving) {
+        if (s.referenced && !s.moving) {
             pose.pan = controller.position(0);
             pose.tilt = controller.position(1);
             pose.valid = true;
@@ -158,6 +182,12 @@ class Device {
         if (pose.valid != lastPose.valid || pose.pan != lastPose.pan ||
             pose.tilt != lastPose.tilt) {
             lastPose = pose;
+            dirty = true;
+        }
+    }
+    void forgetPose() {
+        if (lastPose.valid) {
+            lastPose = Pose{};
             dirty = true;
         }
     }

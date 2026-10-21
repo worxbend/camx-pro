@@ -50,7 +50,13 @@ class Controller {
             s.moving |= axes_[i].moving;
             s.eta = std::max(s.eta, axes_[i].remaining());
         }
+        if (queued_.active)
+            s.eta += queuedDuration_;
         return s;
+    }
+    // Commanded destination of an axis in degrees: the queued target while one waits.
+    double target(unsigned i) const {
+        return queued_.active ? (i == 0 ? queued_.pan : queued_.tilt) : axes_[i].requested;
     }
     const Axis &axis(unsigned i) const { return axes_[i]; }
     // Estimated angle of an axis, always inside its configured travel.
@@ -82,6 +88,10 @@ class Controller {
             return Error::Range;
         scales_ = s;
         return Error::Ok;
+    }
+    // Whether authorize() would accept this epoch and sequence, without consuming it.
+    bool wouldAuthorize(uint32_t epoch, uint32_t sequence) const {
+        return epoch == state_.epoch && sequence != 0 && sequence > state_.sequence;
     }
     Error authorize(uint32_t epoch, uint32_t sequence, uint64_t now) {
         if (epoch != state_.epoch || sequence == 0 || sequence <= state_.sequence)
@@ -159,6 +169,11 @@ class Controller {
             queued_ = {pan, tilt, speed, true};
             for (auto &a : axes_)
                 a.brake(now);
+            // Expected length of the queued move from where the axes will come to rest.
+            Scales scales = scales_;
+            scales.speed *= speed;
+            queuedDuration_ = std::max(axes_[0].estimate(axes_[0].destination(), pan, scales),
+                                       axes_[1].estimate(axes_[1].destination(), tilt, scales));
         } // else: already heading exactly there; a repeated target must not restart the ramp
         heartbeat_ = now;
         return Error::Ok;
@@ -263,6 +278,7 @@ class Controller {
     Config config_{};
     Scales scales_{};
     Target queued_{};
+    double queuedDuration_ = 0;
     uint64_t lastTick_ = 0;
     uint64_t heartbeat_ = 0, jogAt_ = 0;
     double jogPan_ = 0, jogTilt_ = 0;

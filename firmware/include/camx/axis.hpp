@@ -65,7 +65,8 @@ class Axis {
             return -1;
         target_ = config.quantize(degrees);
         direction_ = target_ < steps ? -1 : 1;
-        limits_ = ceilings(scales).stretched(stretch);
+        stopLimits_ = ceilings(scales);
+        limits_ = stopLimits_.stretched(stretch);
         if (!profile_.planRestToRest(std::abs(static_cast<double>(target_ - steps)), limits_))
             return -1;
         return profile_.duration();
@@ -86,14 +87,16 @@ class Axis {
         requested = steps / config.stepsPerDegree();
         profile_.clear();
     }
-    // Smooth stop from the exact present speed and acceleration, using the same ceilings
-    // as the move in progress, so it never needs more room than that move had left.
+    // Smooth stop from the exact present speed and acceleration. It uses the move's ceilings
+    // before any synchronization stretch: still within the configured (and scaled) values,
+    // never needing more room than the move had left, and as prompt as on the leading axis,
+    // instead of letting a stretched axis creep on for seconds.
     void brake(uint64_t now) {
         if (!moving || braking_)
             return;
         sample(elapsed(now));
         const double from = position_;
-        if (!profile_.planStop(std::abs(velocity_), direction_ * acceleration_, limits_)) {
+        if (!profile_.planStop(std::abs(velocity_), direction_ * acceleration_, stopLimits_)) {
             cancel();
             return;
         }
@@ -151,13 +154,19 @@ class Axis {
     double acceleration() const { return acceleration_ / config.stepsPerDegree(); }
     // Seconds of planned motion left as of the latest tick.
     double remaining() const { return moving ? std::max(0.0, profile_.duration() - elapsed_) : 0; }
+    // Seconds a rest-to-rest move from step `from` to `degrees` would take (0 if none).
+    double estimate(int32_t from, double degrees, const Scales &scales) const {
+        Profile probe;
+        const double distance = std::abs(static_cast<double>(config.quantize(degrees) - from));
+        return probe.planRestToRest(distance, ceilings(scales)) ? probe.duration() : 0;
+    }
     // Step the axis is heading for, or holding when idle or braking to a stop.
     int32_t destination() const { return moving ? target_ : steps; }
     bool braking() const { return moving && braking_; }
 
   private:
     Profile profile_;
-    Limits limits_;
+    Limits limits_, stopLimits_;
     double start_ = 0, position_ = 0, velocity_ = 0, acceleration_ = 0, elapsed_ = 0;
     int direction_ = 1;
     int32_t target_ = 0;

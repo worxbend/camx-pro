@@ -50,7 +50,7 @@ inline size_t writeStatus(const Device &device, Error result, bool storageOk, ch
                     "\"accel_now\":%.6f,\"motor_steps\":%.6f,\"reduction\":%.6f,\"minimum\":%.6f,"
                     "\"maximum\":%.6f,\"speed\":%.6f,\"acceleration\":%.6f,\"jerk\":%.6f,"
                     "\"inverted\":%s}",
-                    i ? "," : "", a.steps / c.stepsPerDegree(), a.requested,
+                    i ? "," : "", a.steps / c.stepsPerDegree(), device.controller.target(i),
                     static_cast<long>(a.steps), a.velocity(), a.acceleration(), c.motorSteps,
                     c.reduction, c.minimum, c.maximum, c.speed, c.acceleration, c.jerk,
                     b(c.inverted));

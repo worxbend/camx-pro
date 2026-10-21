@@ -212,6 +212,38 @@ int main() {
         CHECK(r.c.state().steps[0] == r.c.config().axis[0].quantize(1));
     }
 
+    // Braking a synchronized move is prompt on both axes: the stretched axis brakes with its
+    // unstretched ceilings instead of creeping on. Retarget ETA and target include the queue.
+    {
+        for (int kind = 0; kind < 2; ++kind) {
+            Rig r;
+            CHECK(r.c.move(20, 0.2, false, r.now) == Error::Ok);
+            r.run(2.0);
+            if (kind == 0)
+                CHECK(r.c.jog(0, 0, r.now) == Error::Ok);
+            else
+                CHECK(r.c.move(-5, 3, false, r.now, 1, true) == Error::Ok);
+            const uint64_t braking = r.now;
+            if (kind == 1) {
+                const auto s = r.c.state();
+                CHECK(s.queued && r.c.target(0) == -5 && r.c.target(1) == 3);
+                const double expected = s.eta;
+                while (r.c.state().queued)
+                    r.tick();
+                CHECK((r.now - braking) / 1e6 < 1.0); // both axes came to rest quickly
+                r.settle();
+                const double actual = (r.now - braking) / 1e6;
+                CHECK(std::abs(actual - expected) < 0.08 * actual);
+                CHECK(r.c.state().steps[0] == r.c.config().axis[0].quantize(-5));
+            } else {
+                while (r.c.axis(1).moving)
+                    r.tick();
+                CHECK((r.now - braking) / 1e6 < 1.0);
+                r.settle();
+            }
+        }
+    }
+
     // A move that arrives while another is in progress is refused unless it retargets.
     {
         Rig r;
