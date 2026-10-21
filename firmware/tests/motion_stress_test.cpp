@@ -73,6 +73,8 @@ int main() {
             CHECK(++iterations < 400000);
             const auto before = machine.state();
             const double velocities[] = {machine.axis(0).velocity(), machine.axis(1).velocity()};
+            const double accelerations[] = {machine.axis(0).acceleration(),
+                                            machine.axis(1).acceleration()};
             const uint8_t phases[] = {machine.axis(0).phase, machine.axis(1).phase};
             const uint64_t delta = trial % 2 ? 251 : 230 + random() % 41;
             now += delta;
@@ -91,6 +93,11 @@ int main() {
                 CHECK(std::abs(axis.velocity()) <= config.axis[i].speed + 1e-7);
                 CHECK(std::abs(axis.velocity() - velocities[i]) <=
                       config.axis[i].acceleration * delta / 1000000.0 + 1e-7);
+                // Jerk is bounded too: acceleration is continuous and ramps at most at the
+                // configured rate, rebased ticks included (rebasing only ever delays).
+                CHECK(std::abs(axis.acceleration()) <= config.axis[i].acceleration + 1e-7);
+                CHECK(std::abs(axis.acceleration() - accelerations[i]) <=
+                      config.axis[i].jerk * delta / 1000000.0 + 1e-7);
                 if (emitted) {
                     CHECK(lastStep[i] == 0 || now - lastStep[i] >= 1250);
                     const int direction =
@@ -112,5 +119,5 @@ int main() {
     CHECK(stall.state().fault == camx::Error::Timing && !stall.state().referenced);
     CHECK(stall.state().steps[0] == 0 && stall.coils(0) != 0);
     std::cout << "300 randomized dual-axis trajectories, " << physicalSteps
-              << " emitted half-steps, acceleration/spacing/phase/limits/rollover: PASS\n";
+              << " emitted half-steps, jerk/acceleration/spacing/phase/limits/rollover: PASS\n";
 }

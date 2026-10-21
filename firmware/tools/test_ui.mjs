@@ -38,7 +38,19 @@ try {
   await page.locator('#token').fill('test-token-123456789');await page.locator('#connect').click();
   await page.waitForFunction(()=>document.querySelector('#diagnostics').textContent.includes('"api": 1'));
   const state=()=>page.locator('#diagnostics').textContent().then(JSON.parse);
-  async function click(id,result){await page.locator('#'+id).click();await page.waitForFunction(text=>document.querySelector('#message').textContent===text,result+': ok');}
+  // A click that lands while a poll is in flight is declined by the page ("Wait for the pending
+  // request") and sends nothing, so it is repeated; any other outcome ends the wait.
+  async function press(id,expected){
+    for(let attempt=0;attempt<20;attempt++){
+      await page.evaluate(()=>{document.querySelector('#message').textContent='';});
+      await page.locator('#'+id).click();
+      const seen=await page.waitForFunction(text=>{const t=document.querySelector('#message').textContent;return t.includes(text)||t.startsWith('Wait for the pending')?t:false;},expected,{timeout:5000}).then(handle=>handle.jsonValue());
+      if(seen.includes(expected))return;
+      await page.waitForTimeout(100);
+    }
+    throw Error('Command was never sent: '+id);
+  }
+  const click=(id,result)=>press(id,result+': ok');
   await click('reference','reference');await click('arm','arm');
   assert.equal((await state()).armed,true);
   await page.locator('#pan').fill('1');await page.locator('#tilt').fill('-1');
@@ -64,13 +76,49 @@ try {
   assert.equal((await state()).armed,false);
   await page.locator('#presetSet').click();
   await page.waitForFunction(()=>JSON.parse(document.querySelector('#diagnostics').textContent).presets[0].valid);
+  // Motion feel: a runtime scale needs neither released motors nor a new reference.
+  await click('reference','reference');await click('arm','arm');
+  await page.locator('#speedScale').fill('50');await click('motion','motion');
+  await page.waitForFunction(()=>JSON.parse(document.querySelector('#diagnostics').textContent).motion.speed===0.5);
+  assert.equal((await state()).referenced,true);
+  await page.locator('#speedScale').fill('100');await click('motion','motion');
+  await page.waitForFunction(()=>JSON.parse(document.querySelector('#diagnostics').textContent).motion.speed===1);
+  // Retargeting: moves are refused while moving until the box is ticked, then the newest target wins.
+  await page.locator('#pan').fill('4');await page.locator('#tilt').fill('0');await click('move','move');
+  await page.waitForFunction(()=>JSON.parse(document.querySelector('#diagnostics').textContent).moving);
+  assert.equal(await page.locator('#move').isDisabled(),true);
+  await page.locator('#retarget').check();
+  await page.waitForFunction(()=>!document.querySelector('#move').disabled);
+  await page.locator('#pan').fill('-4');await click('move','move');
+  await page.waitForFunction(()=>{const s=JSON.parse(document.querySelector('#diagnostics').textContent);return !s.moving&&!s.queued&&s.axes[0].steps===-182;},null,{timeout:20000});
+  assert.equal(commands.some(c=>c.op==='move'&&c.pan===-4&&c.retarget===true),true);
+  await page.locator('#retarget').uncheck();
+  // Save the present pose under a name while armed, then clear it again.
+  await page.locator('#preset').selectOption('1');await page.locator('#presetName').fill('Desk');
+  await click('presetSave','preset_save');
+  await page.waitForFunction(()=>{const p=JSON.parse(document.querySelector('#diagnostics').textContent).presets[1];return p.valid&&p.name==='Desk'&&Math.abs(p.pan+4)<0.05;});
+  assert.match(await page.locator('#presetList').textContent(),/2 · Desk · -4\.0° \/ 0\.0°/);
+  await page.locator('#presetName').fill('caf\u00e9');await press('presetSave','16 printable ASCII');
+  await click('presetClear','preset_clear');
+  await page.waitForFunction(()=>!JSON.parse(document.querySelector('#diagnostics').textContent).presets[1].valid);
+  // A per-move speed is sent only below 100 %.
+  await page.locator('#moveSpeed').fill('50');await page.locator('#pan').fill('2');await click('move','move');
+  await page.waitForFunction(()=>{const s=JSON.parse(document.querySelector('#diagnostics').textContent);return !s.moving&&s.axes[0].steps===91;},null,{timeout:20000});
+  assert.equal(commands.some(c=>c.op==='move'&&c.pan===2&&c.speed===0.5),true);
+  await page.locator('#moveSpeed').fill('100');
+  // Releasing a referenced, resting mechanism remembers where it was, as a hint only.
+  await click('disarm','disarm');
+  await page.waitForFunction(()=>!document.querySelector('#lastPoseRow').hidden);
+  assert.equal((await state()).last_pose.valid,true);
+  await page.locator('#useLastPose').click();
+  assert.ok(Math.abs(Number(await page.locator('#refPan').inputValue())-2)<0.02);
   // Never persist the API token in browser storage.
   assert.deepEqual(await page.evaluate(()=>[localStorage.length,sessionStorage.length]),[0,0]);
   assert.equal(await page.locator('#token').inputValue(),'');
   await page.setViewportSize({width:390,height:844});
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
   assert.deepEqual(errors,[]);
-  console.log('Browser: connect/reference/arm/geared move/jog release/STOP race/preset/token/mobile layout: PASS');
+  console.log('Browser: connect/reference/arm/geared move/jog release/STOP race/preset/motion feel/retarget/named presets/last pose/token/mobile layout: PASS');
 } finally {
   await browser?.close();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));
   child.stdin.end();child.kill();rmSync(temp,{recursive:true,force:true});

@@ -1,16 +1,41 @@
 #pragma once
 #include "controller.hpp"
 #include "json.hpp"
+#include <cstring>
 
 namespace camx {
+inline constexpr size_t presetNameCapacity = 16;
+
 struct Preset {
     double pan = 0, tilt = 0;
     bool valid = false;
+    char name[presetNameCapacity + 1] = {};
 };
+// Names are printable ASCII only, so they can be written into JSON without escaping.
+inline bool validPresetName(std::string_view name) {
+    if (name.size() > presetNameCapacity)
+        return false;
+    for (char c : name)
+        if (c < 0x20 || c > 0x7e)
+            return false;
+    return true;
+}
+inline void setPresetName(Preset &preset, std::string_view name) {
+    std::memset(preset.name, 0, sizeof(preset.name));
+    std::memcpy(preset.name, name.data(), name.size());
+}
+// Where the mechanism rested the last time the operator released the motors. It is only a
+// hint for the operator's next manual reference; the firmware never trusts it on its own.
+struct Pose {
+    double pan = 0, tilt = 0;
+    bool valid = false;
+};
+
 class Device {
   public:
     Controller controller;
     std::array<Preset, 8> presets{};
+    Pose lastPose{};
     bool dirty = false;
     explicit Device(uint32_t epoch) : controller(epoch) {}
 
@@ -38,51 +63,46 @@ class Device {
         auto authorized = controller.authorize(epoch, seq, now);
         if (authorized != Error::Ok)
             return authorized;
-        if (name == "move" || name == "relative" || name == "reference" || name == "jog") {
+        if (name == "reference" || name == "jog") {
             double pan = 0, tilt = 0;
             if (!p.only({"op", "epoch", "seq", "pan", "tilt"}) || !p.number("pan", pan) ||
                 !p.number("tilt", tilt))
                 return Error::Invalid;
-            if (name == "reference")
-                return controller.reference(pan, tilt);
-            if (name == "jog")
-                return controller.jog(pan, tilt, now);
-            return controller.move(pan, tilt, name == "relative", now);
+            return name == "reference" ? controller.reference(pan, tilt)
+                                       : controller.jog(pan, tilt, now);
+        }
+        if (name == "move" || name == "relative") {
+            double pan = 0, tilt = 0, speed = 1;
+            bool retarget = false;
+            if (!p.only({"op", "epoch", "seq", "pan", "tilt", "speed", "retarget"}) ||
+                !p.number("pan", pan) || !p.number("tilt", tilt) ||
+                !moveOptions(p, speed, retarget))
+                return Error::Invalid;
+            return controller.move(pan, tilt, name == "relative", now, speed, retarget);
+        }
+        if (name == "center") {
+            double speed = 1;
+            bool retarget = false;
+            if (!p.only({"op", "epoch", "seq", "speed", "retarget"}) ||
+                !moveOptions(p, speed, retarget))
+                return Error::Invalid;
+            return controller.move(0, 0, false, now, speed, retarget);
         }
         if (name == "settings")
             return settings(p);
-        if (name == "preset_set" || name == "preset_move") {
-            uint32_t slot = 0;
-            if (!p.integer("slot", slot) || slot >= presets.size())
-                return Error::Invalid;
-            if (name == "preset_move") {
-                if (!p.only({"op", "epoch", "seq", "slot"}) || !presets[slot].valid)
-                    return Error::Invalid;
-                return controller.move(presets[slot].pan, presets[slot].tilt, false, now);
-            }
-            if (!p.only({"op", "epoch", "seq", "slot", "pan", "tilt"}))
-                return Error::Invalid;
-            if (controller.state().armed)
-                return Error::Busy;
-            Preset preset;
-            if (!p.number("pan", preset.pan) || !p.number("tilt", preset.tilt) ||
-                !validPreset(preset))
-                return Error::Range;
-            preset.valid = true;
-            presets[slot] = preset;
-            dirty = true;
-            return Error::Ok;
-        }
+        if (name == "motion")
+            return motion(p);
+        if (name.substr(0, 7) == "preset_")
+            return preset(name, p, now);
         if (!p.only({"op", "epoch", "seq"}))
             return Error::Invalid;
         if (name == "arm")
             return controller.arm(now);
         if (name == "disarm") {
+            rememberPose();
             controller.disarm();
             return Error::Ok;
         }
-        if (name == "center")
-            return controller.move(0, 0, false, now);
         if (name == "heartbeat")
             return Error::Ok;
         return Error::Invalid; // No fake sensor homing or legacy servo calibration.
@@ -93,12 +113,143 @@ class Device {
                p.pan <= c.axis[0].maximum && p.tilt >= c.axis[1].minimum &&
                p.tilt <= c.axis[1].maximum;
     }
+    bool validPose(const Pose &pose) const {
+        Preset probe;
+        probe.pan = pose.pan;
+        probe.tilt = pose.tilt;
+        return validPreset(probe);
+    }
 
   private:
+    // Optional per-move fields shared by move, relative, center and preset_move.
+    static bool moveOptions(const Packet &p, double &speed, bool &retarget) {
+        if (const auto *field = p.get("speed")) {
+            if (field->type != Field::Type::Number)
+                return false;
+            speed = field->number;
+        }
+        if (const auto *field = p.get("retarget")) {
+            if (field->type != Field::Type::Boolean)
+                return false;
+            retarget = field->number != 0;
+        }
+        return true;
+    }
+    // Optional preset name: absent leaves `present` false; anything unusable is invalid.
+    static bool presetName(const Packet &p, std::string_view &name, bool &present) {
+        const auto *field = p.get("name");
+        present = field != nullptr;
+        if (!field)
+            return true;
+        if (field->type != Field::Type::Text || !validPresetName(field->text))
+            return false;
+        name = field->text;
+        return true;
+    }
+    // Remember the resting pose, but only when it is a position the firmware trusts.
+    void rememberPose() {
+        const auto s = controller.state();
+        Pose pose;
+        if (s.referenced && s.fault == Error::Ok && !s.moving) {
+            pose.pan = controller.position(0);
+            pose.tilt = controller.position(1);
+            pose.valid = true;
+        }
+        if (pose.valid != lastPose.valid || pose.pan != lastPose.pan ||
+            pose.tilt != lastPose.tilt) {
+            lastPose = pose;
+            dirty = true;
+        }
+    }
+    // Presets can be recalled and edited at any time. Writes that need explicit coordinates
+    // stay limited to released motors; saving the present pose or clearing a slot only
+    // marks the settings dirty, and flash is written once the motors are released.
+    Error preset(std::string_view name, const Packet &p, uint64_t now) {
+        uint32_t slot = 0;
+        if (!p.integer("slot", slot) || slot >= presets.size())
+            return Error::Invalid;
+        Preset &target = presets[slot];
+        if (name == "preset_move") {
+            double speed = 1;
+            bool retarget = false;
+            if (!p.only({"op", "epoch", "seq", "slot", "speed", "retarget"}) ||
+                !moveOptions(p, speed, retarget) || !target.valid)
+                return Error::Invalid;
+            return controller.move(target.pan, target.tilt, false, now, speed, retarget);
+        }
+        if (name == "preset_clear") {
+            if (!p.only({"op", "epoch", "seq", "slot"}))
+                return Error::Invalid;
+            if (target.valid) {
+                target = Preset{};
+                dirty = true;
+            }
+            return Error::Ok;
+        }
+        std::string_view label;
+        bool named = false;
+        if (name == "preset_set") {
+            if (!p.only({"op", "epoch", "seq", "slot", "pan", "tilt", "name"}))
+                return Error::Invalid;
+            if (controller.state().armed)
+                return Error::Busy;
+            Preset next;
+            if (!p.number("pan", next.pan) || !p.number("tilt", next.tilt) || !validPreset(next))
+                return Error::Range;
+            if (!presetName(p, label, named))
+                return Error::Invalid;
+            return store(target, next, label, named);
+        }
+        if (name == "preset_save") {
+            if (!p.only({"op", "epoch", "seq", "slot", "name"}) || !presetName(p, label, named))
+                return Error::Invalid;
+            const auto s = controller.state();
+            if (!s.referenced)
+                return Error::NotReferenced;
+            if (s.moving || s.jogging)
+                return Error::Busy;
+            Preset next;
+            next.pan = controller.position(0);
+            next.tilt = controller.position(1);
+            return store(target, next, label, named);
+        }
+        return Error::Invalid;
+    }
+    // A name that is not supplied stays with the slot; a new slot starts unnamed.
+    Error store(Preset &target, Preset next, std::string_view label, bool named) {
+        next.valid = true;
+        if (named)
+            setPresetName(next, label);
+        else if (target.valid)
+            std::memcpy(next.name, target.name, sizeof(next.name));
+        target = next;
+        dirty = true;
+        return Error::Ok;
+    }
+    Error motion(const Packet &p) {
+        if (!p.only({"op", "epoch", "seq", "speed", "accel", "jerk"}))
+            return Error::Invalid;
+        auto scales = controller.scales();
+        bool any = false;
+        auto read = [&](const char *key, double &value) {
+            const auto *field = p.get(key);
+            if (!field)
+                return true;
+            if (field->type != Field::Type::Number)
+                return false;
+            value = field->number;
+            any = true;
+            return true;
+        };
+        if (!read("speed", scales.speed) || !read("accel", scales.accel) ||
+            !read("jerk", scales.jerk) || !any)
+            return Error::Invalid;
+        return controller.setScales(scales);
+    }
     Error settings(const Packet &p) {
         if (!p.only({"op", "epoch", "seq", "commissioned", "pan_steps", "tilt_steps", "pan_min",
                      "pan_max", "tilt_min", "tilt_max", "pan_speed", "tilt_speed", "pan_accel",
-                     "tilt_accel", "pan_inverted", "tilt_inverted"}))
+                     "tilt_accel", "pan_jerk", "tilt_jerk", "pan_inverted", "tilt_inverted"}))
             return Error::Invalid;
         auto c = controller.config();
         auto number = [&](const char *key, double &value) {
@@ -119,8 +270,8 @@ class Device {
             !number("tilt_max", c.axis[1].maximum) || !number("pan_speed", c.axis[0].speed) ||
             !number("tilt_speed", c.axis[1].speed) ||
             !number("pan_accel", c.axis[0].acceleration) ||
-            !number("tilt_accel", c.axis[1].acceleration) ||
-            !boolean("pan_inverted", c.axis[0].inverted) ||
+            !number("tilt_accel", c.axis[1].acceleration) || !number("pan_jerk", c.axis[0].jerk) ||
+            !number("tilt_jerk", c.axis[1].jerk) || !boolean("pan_inverted", c.axis[0].inverted) ||
             !boolean("tilt_inverted", c.axis[1].inverted) ||
             !boolean("commissioned", c.commissioned))
             return Error::Invalid;
@@ -128,7 +279,9 @@ class Device {
         if (result == Error::Ok) {
             for (auto &preset : presets)
                 if (preset.valid && !validPreset(preset))
-                    preset.valid = false;
+                    preset = Preset{};
+            if (lastPose.valid && !validPose(lastPose))
+                lastPose = Pose{};
             dirty = true;
         }
         return result;

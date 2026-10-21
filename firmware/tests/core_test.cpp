@@ -39,7 +39,8 @@ int main() {
     CHECK(controller.reference(0, 0) == camx::Error::Ok);
     CHECK(controller.arm(1000000) == camx::Error::Ok);
     CHECK(controller.jog(1, -1, 1000000) == camx::Error::Ok);
-    for (uint64_t us = 1000250; us <= 2200000; us += 250)
+    // The lease lapses at 1.5 s; the jerk-limited stop from about 3.6 deg/s takes ~0.7 s.
+    for (uint64_t us = 1000250; us <= 3000000; us += 250)
         controller.tick(us);
     CHECK(!controller.state().moving);
     CHECK(controller.state().referenced);

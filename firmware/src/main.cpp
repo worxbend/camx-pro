@@ -20,6 +20,9 @@
 
 namespace {
 camx::Device device(1);
+// Copy of `device` for serialization and flash writes. Only the loop task touches it, and
+// keeping it off the stack leaves that task's stack for the HTTP and JSON work.
+camx::Device scratch(1);
 SemaphoreHandle_t motorMutex = nullptr;
 esp_timer_handle_t motorTimer = nullptr;
 Preferences preferences;
@@ -67,14 +70,16 @@ void motorTick(void *) {
     // ESP_TIMER_TASK callback, not ISR. No allocation, I/O, logging or flash writes.
     if (xSemaphoreTake(motorMutex, 0) != pdTRUE)
         return;
+    const uint64_t began = nowUs();
     if constexpr (board::stopPin >= 0) {
         bool open = gpio_get_level(static_cast<gpio_num_t>(board::stopPin)) != 0;
         if (open && !physicalStopWasOpen)
             device.controller.stop();
         physicalStopWasOpen = open;
     }
-    device.controller.tick(nowUs());
+    device.controller.tick(began);
     applyCoils();
+    device.controller.noteTickCost(nowUs() - began);
     xSemaphoreGive(motorMutex);
 }
 
@@ -102,9 +107,8 @@ camx::Error execute(std::string_view body) {
     xSemaphoreGive(motorMutex);
     if (persist) {
         // The loop task is the sole command writer. Timer cannot arm the device.
-        camx::Device copy(1);
-        snapshot(copy);
-        const auto blob = camx::encodeSettings(copy);
+        snapshot(scratch);
+        const auto blob = camx::encodeSettings(scratch);
         storageOk =
             nvsOpen && preferences.putBytes("settings", blob.data(), blob.size()) == blob.size();
         xSemaphoreTake(motorMutex, portMAX_DELAY);
@@ -118,9 +122,8 @@ camx::Error execute(std::string_view body) {
 }
 
 size_t makeStatus(camx::Error result, char *buffer, size_t capacity) {
-    camx::Device copy(1);
-    snapshot(copy);
-    return camx::writeStatus(copy, result, storageOk, buffer, capacity);
+    snapshot(scratch);
+    return camx::writeStatus(scratch, result, storageOk, buffer, capacity);
 }
 
 void respond(int code, const char *type, const char *body, size_t length) {
@@ -260,10 +263,12 @@ void setup() {
     nvsOpen = preferences.begin("camx-pro-v1", false);
     storageOk = nvsOpen;
     if (nvsOpen && preferences.isKey("settings")) {
+        // Accepts the current format and the shorter one written by firmware 1.0.0.
         camx::SettingsBlob blob{};
-        storageOk = preferences.getBytesLength("settings") == blob.size() &&
-                    preferences.getBytes("settings", blob.data(), blob.size()) == blob.size() &&
-                    camx::decodeSettings(blob, device);
+        const size_t stored = preferences.getBytesLength("settings");
+        storageOk = stored > 0 && stored <= blob.size() &&
+                    preferences.getBytes("settings", blob.data(), stored) == stored &&
+                    camx::decodeSettings(blob.data(), stored, device);
         if (!storageOk)
             Serial.println("Settings invalid: reduced defaults loaded; position unreferenced");
     }
@@ -289,7 +294,7 @@ void setup() {
         server.begin();
     }
     Serial.println(
-        "CAMX Pro 1.0.0; coils OFF; manual reference required. Serial JSON: {\"op\":\"state\"}");
+        "CAMX Pro 1.1.0; coils OFF; manual reference required. Serial JSON: {\"op\":\"state\"}");
     if (!provisioned)
         Serial.println(
             "Wi-Fi control disabled: configure ignored credentials.h (16–96 character token)");
