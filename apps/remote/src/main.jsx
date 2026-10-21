@@ -103,7 +103,8 @@ function App() {
   const target = (op, fields = {}) => command(op, { ...fields, ...moveOptions() });
   const named = () => {
     const name = presetName().trim();
-    if (!validName(name)) throw Error('Name: up to 16 printable ASCII characters, without " or \\.');
+    if (!validName(name))
+      throw Error('Name: up to 16 printable ASCII characters, without " or \\.');
     return caps().presetNames && name ? { name } : {};
   };
   const savePreset = (op, fields) => act(() => session.request(op, { ...fields, ...named() }));
