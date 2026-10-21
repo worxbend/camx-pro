@@ -16,7 +16,8 @@
 <script>
 'use strict';
 const $ = id => document.getElementById(id);
-let token='', state=null, busy=false, generation=0, active=null, owns=false, held=null, wanted=null, releasePending=false, lastBeat=0;
+let token='', state=null, busy=false, generation=0, active=null, pendingOp=null, owns=false, held=null, wanted=null, releasePending=false, lastBeat=0;
+const movementOps=new Set(['move','relative','center','preset_move','jog']);
 const message = text => { $('message').textContent=text; };
 function render(s) {
   state=s;
@@ -25,14 +26,14 @@ function render(s) {
   const motion=s.stopped?'STOP LATCHED':s.queued?'RETARGETING':s.moving?`MOVING${s.eta>0?` · ${s.eta.toFixed(1)} s left`:''}`:s.armed?'ARMED — holding coils':'MOTORS RELEASED';
   $('state').textContent=`${motion} · ${s.referenced?'Referenced estimate':'POSITION UNKNOWN'} · ${s.commissioned?'Commissioned limits':'Reduced commissioning limits'}${s.settings_dirty?' · unsaved (written when released)':''}`;
   $('diagnostics').textContent=JSON.stringify(s,null,2);
-  const canMove=s.armed&&!s.stopped&&!s.jogging&&(!s.moving||$('retarget').checked);
+  const canMove=owns&&s.armed&&!s.stopped&&!s.jogging&&(!s.moving||$('retarget').checked);
   for (const id of ['move','relative','center','presetMove']) $(id).disabled=!canMove;
   $('presetSave').disabled=!s.referenced||s.moving||s.jogging; $('presetClear').disabled=!s.presets[Number($('preset').value)].valid;
   for (const [id,key] of [['speedScale','speed'],['accelScale','accel'],['jerkScale','jerk']]) if (document.activeElement!==$(id)) $(id).value=Math.round(s.motion[key]*100);
   renderPresets(s);
   if (s.last_pose.valid) { $('lastPose').textContent=`pan ${s.last_pose.pan.toFixed(2)}° · tilt ${s.last_pose.tilt.toFixed(2)}°`; }
   $('lastPoseRow').hidden=!s.last_pose.valid||s.armed;
-  document.querySelectorAll('.jog').forEach(b=>b.disabled=!s.armed||s.stopped);
+  document.querySelectorAll('.jog').forEach(b=>b.disabled=!owns||!s.armed||s.stopped);
   $('reference').disabled=s.armed; $('arm').disabled=s.armed||!s.referenced||s.stopped;
   $('saveSettings').disabled=s.armed; $('presetSet').disabled=s.armed;
 }
@@ -54,9 +55,10 @@ function renderPresets(s) {
 }
 async function request(command=null, priority=false) {
   if (!token) { message('Enter an API token and connect first.'); return; }
+  if (movementOps.has(command?.op)&&!owns) { message('Arm this controller session before movement.'); return; }
   if (busy && !priority) return;
   if (priority) { generation++; active?.abort(); busy=false; held=null; wanted=null; releasePending=false; owns=false; }
-  const mine=generation; const abort=new AbortController(); active=abort; busy=true;
+  const mine=generation; const abort=new AbortController(); active=abort; busy=true; pendingOp=command?.op??null;
   const timeout=setTimeout(()=>abort.abort(),1800);
   try {
     const options={headers:{Authorization:`Bearer ${token}`},signal:abort.signal,cache:'no-store'};
@@ -69,23 +71,33 @@ async function request(command=null, priority=false) {
     const response=await fetch(command?'/api/command':'/api/state',options);
     const next=await response.json();
     if (mine!==generation) return;
-    if (next.axes) render(next);
+    if (next.axes) {
+      const changedEpoch=state&&state.epoch!==next.epoch;
+      const foreignSequence=!command&&state&&state.seq!==next.seq;
+      if (changedEpoch||foreignSequence||next.result==='stale'||!next.armed||next.stopped) {
+        owns=false; held=null; wanted=null; releasePending=false;
+      }
+      if (command?.op==='arm'&&response.ok&&next.result==='ok'&&next.armed&&!next.stopped) owns=true;
+      render(next);
+    }
     if (!response.ok) throw Error(next.result||next.error||`HTTP ${response.status}`);
-    if (command?.op==='arm') owns=true;
     if (command && command.op!=='heartbeat' && command.op!=='jog') message(`${command.op}: ${next.result}`);
     else if (!command) message('Connected. Position values are commanded estimates.');
   } catch (error) {
     if (mine===generation) {
       message(`${error.message}. No command will be retried automatically.`);
-      held=null; releasePending=false;
-      if (owns) { owns=false; setTimeout(()=>request({op:'stop'},true),0); }
+      held=null; wanted=null; releasePending=false;
+      if (owns||command?.op==='arm') {
+        owns=false;
+        setTimeout(()=>{if(mine===generation)request({op:'stop'},true);},0);
+      }
     }
   } finally {
     clearTimeout(timeout);
     if (mine===generation) {
-      busy=false; active=null;
+      busy=false; active=null; pendingOp=null;
       if (releasePending) { releasePending=false; request({op:'jog',pan:0,tilt:0}); }
-      else if (wanted) { held=wanted; wanted=null; request(held); } // pressed while a poll was in flight
+      else if (wanted&&owns) { held=wanted; wanted=null; request(held); } // pressed while a poll was in flight
     }
   }
 }
@@ -111,13 +123,13 @@ $('saveSettings').onclick=action('settings',()=>{ const value=JSON.parse($('sett
 $('loadSettings').onclick=()=>{ if (!state) return; const value={commissioned:state.commissioned}; for (const [i,name] of ['pan','tilt'].entries()) {const a=state.axes[i]; Object.assign(value,{[name+'_steps']:a.motor_steps,[name+'_speed']:a.speed,[name+'_accel']:a.acceleration,[name+'_jerk']:a.jerk,[name+'_min']:a.minimum,[name+'_max']:a.maximum,[name+'_inverted']:a.inverted});} $('settings').value=JSON.stringify(value,null,2); };
 function release() { if (wanted) { wanted=null; return; } if (!held) return; held=null; if (busy) releasePending=true; else request({op:'jog',pan:0,tilt:0}); }
 for (const button of document.querySelectorAll('.jog')) {
-  const start=()=>{ if (held||!state?.armed||state.stopped) return; const jog={op:'jog',pan:Number(button.dataset.pan),tilt:Number(button.dataset.tilt)}; if (busy) { wanted=jog; return; } held=jog; request(held); };
+  const start=()=>{ if (held||!owns||!state?.armed||state.stopped) return; const jog={op:'jog',pan:Number(button.dataset.pan),tilt:Number(button.dataset.tilt)}; if (busy) { wanted=jog; return; } held=jog; request(held); };
   button.onpointerdown=e=>{e.preventDefault();button.setPointerCapture(e.pointerId);start();};
   button.onpointerup=release;button.onpointercancel=release;button.onlostpointercapture=release;
   button.onkeydown=e=>{if ((e.key===' '||e.key==='Enter')&&!e.repeat){e.preventDefault();start();}};
   button.onkeyup=e=>{if(e.key===' '||e.key==='Enter')release();};button.onblur=release;
 }
-function suspend() { if (owns||held) request({op:'stop'},true); held=null; wanted=null; }
+function suspend() { if (owns||held||pendingOp==='arm'||movementOps.has(pendingOp)) request({op:'stop'},true); held=null; wanted=null; }
 window.addEventListener('blur',suspend);window.addEventListener('pagehide',suspend);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)suspend();});
 setInterval(()=>{ if (busy||!state||document.hidden) return; if(held) request(held); else if(owns&&Date.now()-lastBeat>=1000){lastBeat=Date.now();request({op:'heartbeat'});} },150);

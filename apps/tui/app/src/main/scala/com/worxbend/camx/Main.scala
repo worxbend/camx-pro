@@ -7,7 +7,7 @@ object Main:
 Usage: ./mill app.run --demo [--json]
        ./mill app.run --url http://DEVICE_IP [--json]
 
-Live mode prompts for the API token, or reads CAMX_API_TOKEN from the environment.
+Live mode prompts for the API token, or reads CAMX_PRO_API_TOKEN from the environment.
 --json reads state once without arming or moving. No automatic reconnect/arm.
 Alt+arrows: bounded steps; Alt+y/u/b/n: diagonal steps. Esc: STOP.
 q: quit (best-effort STOP if owned). Firmware 1.1.0 adds motion feel, retargeting,
@@ -25,8 +25,8 @@ The demo is synthetic and never connects to hardware.
         val rest = options.filterNot(Set("--demo", "--json"))
         require((demo && rest.isEmpty) || (!demo && rest.size == 2 && rest.head == "--url"), help)
         val transport: Transport = if demo then Demo() else
-          val token = sys.env.get("CAMX_API_TOKEN").getOrElse {
-            require(System.console() != null, "Set CAMX_API_TOKEN for a noninteractive launch")
+          val token = sys.env.get("CAMX_PRO_API_TOKEN").getOrElse {
+            require(System.console() != null, "Set CAMX_PRO_API_TOKEN for a noninteractive launch")
             val chars = System.console().readPassword("API token: ")
             require(chars != null, "Token input cancelled")
             try String(chars) finally java.util.Arrays.fill(chars, '\u0000')

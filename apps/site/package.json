@@ -1,5 +1,5 @@
 {
-  "name": "@camx/site",
+  "name": "@camx-pro/site",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -9,6 +9,8 @@
     "preview": "vite preview --host 127.0.0.1"
   },
   "dependencies": {
+    "@fontsource-variable/manrope": "5.3.0",
+    "@fontsource/anton": "5.3.0",
     "three": "0.180.0"
   },
   "devDependencies": {

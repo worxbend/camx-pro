@@ -3,6 +3,34 @@
 Validated on 21 October 2026. These checks exercise software and exported CAD;
 no ESP32 was flashed and no motor or camera was moved.
 
+## Standalone project configuration
+
+Checked on 21 October 2026 after moving local npm packages to `@camx-pro/*`
+and application configuration to `CAMX_PRO_DEVICE_URL`, `CAMX_PRO_PORT` and
+`CAMX_PRO_API_TOKEN`. The implementation plan and contributor guidance now
+define requirements within this repository, without sibling-checkout references.
+
+- Lockfile regeneration and `npm ci` succeeded. The workspace links resolve
+  to packages inside this repository.
+- `npm test`: 23 passed, including bridge CLI launches from an empty temporary
+  working directory. An unrelated device variable does not configure a proxy;
+  the explicit Pro variable reaches only the loopback fixture.
+- `npm run assets:fetch`, `npm run build`, model verification and site-link
+  verification passed. All 11 CAD downloads came from the pinned CAMX Pro release.
+- `npm run test:browser`: all 7 scenarios passed against the C++ simulator.
+- `./mill --no-server app.test`: all 12 Scala tests passed; assembly and the
+  packaged PTY render/exit/restoration check passed.
+- `python3 apps/tui/scripts/test_environment.py`: passed. From an empty temporary
+  working directory, the packaged JAR rejects a noninteractive launch with only
+  an unrelated token and accepts the Pro token against a loopback state fixture.
+  This check is also included in the application CI workflow.
+- Prettier, the CAD/firmware mechanical contract, all 3 asset-integrity tests and
+  `git diff --check` passed.
+
+Validation used Node 24 and JDK 25. CAD geometry regeneration, ESP32 builds and
+hardware qualification were not rerun for this configuration/documentation change.
+GitHub Actions has not run for these local changes.
+
 ## Firmware 1.1 client update
 
 Checked on 21 October 2026 after both remotes gained the firmware 1.1.0 features
@@ -75,3 +103,25 @@ a client application.
 The original prototype workflow still validates mechanical and embedded targets
 separately. Its long geometry checks do not gate a documentation-only Pages
 publication; the Pages build instead verifies the pinned P3 CAD source hash.
+
+## Joystick remote verification — 21 October 2026
+
+The remote now has a draggable circular joystick with a 16% center dead zone,
+proportional axis fractions in 5% increments and 25/50/100% speed caps. Mouse,
+touch and arrow-key chords use one latest-intent coordinator over the existing
+Session. Firmware changes are not required: a new vector brakes first and starts
+only when the authoritative state reports idle. Release discards queued intent.
+
+- 29 Node tests pass, including joystick vector bounds, coalescing, release during
+  a pending request, release before a poll returns, braking, STOP, ownership loss
+  and failed exchanges.
+- Five browser joystick regressions pass against the portable C++ controller:
+  proportional and diagonal movement, direction changes, release outside the pad,
+  release while an accepted command response is delayed, keyboard chords and
+  repeat use after braking, focus loss, Escape, pointer-capture loss, window blur,
+  and Chromium touch drag/cancellation. The full browser suite passes all 15
+  scenarios, including the microsite, CAD viewer and existing remote workflows.
+- Production build, Prettier, whitespace and local link/asset checks pass.
+  Desktop and phone screenshots were reviewed; the preview console was clean.
+- Physical motors remain untested. Browser tests run against a host fixture;
+  touchscreen input is browser-emulated, not a physical-device qualification.

@@ -1,12 +1,10 @@
-# Firmware and feature migration
+# CAMX Pro hardware and control contract
 
-`../camx` was inspected read-only at
-`800f05acccf26577ddd18de381491bd0af53b88a`. Its local changes were preserved.
-The repository now also implements [ESP32 firmware](../../firmware/README.md).
+This repository owns the mechanical design and [ESP32 firmware](../../firmware/README.md).
 See the [API](../../firmware/docs/api.md) and [software verification](../../firmware/docs/verification.md).
 The CAD viewer remains separate and cannot command motors. No hardware was flashed.
 
-## Implemented from the camx feature contract
+## Implemented controls
 
 - Wi-Fi setup, authenticated HTTP control, serial diagnostics and state reporting.
 - Independent/combined absolute moves, relative moves, configurable speed,
@@ -16,12 +14,11 @@ The CAD viewer remains separate and cannot command motors. No hardware was flash
 - Controller epochs to reject stale commands; validation of finite numbers,
   ranges and malformed requests.
 - Browser remote controls, calibration, persistent settings and eight presets.
-  Existing camx/OBS clients need an adapter for the new command protocol.
+  Both remotes implement the CAMX Pro command protocol.
 
 ## Stepper implementation
 
-The old project drives SG90 servos with a 50 Hz PWM loop. Its limits and pulse
-calibration do not apply to these stepper motors. The new implementation uses
+The firmware drives two 28BYJ-48 steppers with
 nonblocking four-phase half-step scheduling through ULN2003. It does not use
 servo PWM or current-controlled microstepping.
 
@@ -32,8 +29,8 @@ gearbox must not be counted twice. Both motors need independent calibration,
 current/temperature tests and load tests. The build checks generated constants
 against CAD; a changed mechanical fingerprint invalidates old stored settings.
 
-Firmware 1.0.0 used independent rest-to-rest trapezoids in place of the old
-servo/Ruckig planner. Firmware 1.1.0 replaces them with jerk-limited S-curves,
+CAMX Pro firmware 1.0.0 used independent rest-to-rest trapezoids.
+Firmware 1.1.0 replaces them with jerk-limited S-curves,
 synchronized pan/tilt arrival and opt-in retargeting (`"retarget":true`; without
 it a move during motion is still `busy`); see the [firmware API](../../firmware/docs/api.md).
 The scheduler does not replay overdue steps.
@@ -46,9 +43,9 @@ coils can drop an unbalanced camera.
 
 ## Reference and limits
 
-The original camx `/home` command means move to zero; it does not physically
-home. Here, distinguish **reference search**, **manual reference acknowledgment**
-and **go to center**. Without sensors, require the operator to align witness
+Distinguish **reference search**, **manual reference acknowledgment** and
+**go to center**. The `center` command moves to zero using an established
+reference; it does not find a physical home. Without sensors, require the operator to align witness
 marks before acknowledging reference; the device must never infer it from
 stored step counts after a reboot.
 

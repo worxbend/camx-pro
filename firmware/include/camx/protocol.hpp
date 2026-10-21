@@ -109,7 +109,7 @@ class Device {
         }
         if (name == "heartbeat")
             return Error::Ok;
-        return Error::Invalid; // No fake sensor homing or legacy servo calibration.
+        return Error::Invalid; // Sensor homing and pulse calibration are unsupported.
     }
     // Called by the adapter before executing `arm`: true when the stored last pose must be
     // erased from flash first. Once the coils energize, a reset could leave the mechanism

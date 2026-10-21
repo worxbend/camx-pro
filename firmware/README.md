@@ -150,7 +150,7 @@ position. There is no automatic hold-current reduction on ULN2003.
   a new direction, still returns `busy` during motion; release a jog and wait before
   reversing. A stop uses the move's ceilings from before the synchronization
   stretch, so the slowed-down axis stops as promptly as the leading one (the two then
-  stop independently). Unlike camx's Ruckig planner this one handles rest-to-rest
+  stop independently). The planner handles rest-to-rest
   moves and stops only; it does not blend a new target into a running move without
   braking.
 - A 250 µs `ESP_TIMER_TASK` callback advances the motor state under a short
@@ -195,7 +195,6 @@ acknowledgment; `center` moves to zero. Automatic sensor search is deliberately
 unimplemented. Adding it requires selected sensors, wiring, approach/back-off,
 debounce, travel/time limits, stuck-sensor detection and hardware tests.
 
-See [API and migration](docs/api.md) and
-[local validation](docs/verification.md). Existing camx servo clients
-need an adapter for this versioned command protocol; OBS integration is through
-that host-side API adapter, not a video or OBS plugin inside the ESP32.
+See the [CAMX Pro API](docs/api.md) and [local validation](docs/verification.md).
+Host-side automation must implement this versioned command protocol. Optional
+OBS integration belongs on the host; the ESP32 handles motion only.

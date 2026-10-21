@@ -2,236 +2,376 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#e4ddf4" />
     <meta
       name="description"
-      content="CAMX Pro: an open, printable PTZ camera with a planetary pan actuator, ESP32 firmware, web and terminal remotes. Explore the actual CAD and P3 prototype files."
+      content="Static is overrated. Meet CAMX Pro, a printable pan–tilt rig for the Anker C200. Explore the real 3D assembly, try both axes, and build your own."
     />
-    <meta name="theme-color" content="#e7ece8" />
-    <title>CAMX Pro — A camera in motion</title>
+    <meta property="og:title" content="CAMX Pro — Static is overrated." />
+    <meta
+      property="og:description"
+      content="A printable pan–tilt rig. Made to move. Built by you."
+    />
+    <meta property="og:type" content="website" />
+    <title>CAMX Pro — Static is overrated.</title>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
   </head>
   <body>
-    <a class="skip" href="#main">Skip to content</a>
-    <header class="site-nav">
-      <a class="brand" href="./" aria-label="CAMX Pro home"
-        ><span class="mark">C<span>+</span></span> CAMX PRO</a
-      >
-      <nav aria-label="Main navigation">
-        <a href="#mechanism">The mechanism</a><a href="viewer.html">CAD viewer</a
-        ><a href="control/?demo=1">Remote demo</a
-        ><a href="https://github.com/worxbend/camx-pro">GitHub ↗</a>
-      </nav>
-    </header>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      class="icon-library"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <symbol id="arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6" /></symbol>
+      <symbol id="out" viewBox="0 0 24 24"><path d="M6 18 18 6M6 6h12v12" /></symbol>
+      <symbol id="play" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7Z" /></symbol>
+      <symbol id="reset" viewBox="0 0 24 24"><path d="M19 9a8 8 0 1 0 1 7M19 4v5h-5" /></symbol>
+      <symbol id="gear" viewBox="0 0 24 24">
+        <path
+          d="m9 3-.5 3-2 1-3-.5-2 3L4 12l-.5 2.5-2 2 2 3 3-.5 2 1 .5 3h4l.5-3 2-1 3 .5 2-3-2-2L20 12l2-2.5-2-3-3 .5-2-1-.5-3Z"
+        />
+        <circle cx="12" cy="13" r="3" />
+      </symbol>
+      <symbol id="belt" viewBox="0 0 24 24">
+        <path d="M3 13 13 3a6 6 0 0 1 8 8L11 21a6 6 0 0 1-8-8Z" />
+        <circle cx="7" cy="17" r="2.5" />
+        <circle cx="17" cy="7" r="2.5" />
+      </symbol>
+      <symbol id="cube" viewBox="0 0 24 24">
+        <path d="m12 2 9 5v10l-9 5-9-5V7Zm0 10 9-5M3 7l9 5v10" />
+      </symbol>
+      <symbol id="chip" viewBox="0 0 24 24">
+        <rect x="5" y="5" width="14" height="14" rx="2" />
+        <path d="M9 1v4m6-4v4M9 19v4m6-4v4M1 9h4m-4 6h4m14-6h4m-4 6h4" />
+      </symbol>
+      <symbol id="download" viewBox="0 0 24 24">
+        <path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5" />
+      </symbol>
+      <symbol id="file" viewBox="0 0 24 24">
+        <path d="M14 3H5v18h14V8Zm0 0v5h5M8 13h8m-8 4h5" />
+      </symbol>
+      <symbol id="orbit" viewBox="0 0 24 24">
+        <ellipse cx="12" cy="12" rx="11" ry="5" transform="rotate(-35 12 12)" />
+        <circle cx="12" cy="12" r="3" />
+      </symbol>
+    </svg>
+    <div class="hero-surface" id="rig">
+      <header class="site-header wrap">
+        <a class="wordmark" href="#rig" aria-label="CAMX Pro home">CAMX PRO</a>
+        <nav aria-label="Main navigation">
+          <a href="#rig">The rig</a><a href="#inside">Inside</a><a href="#build">Build it</a>
+        </nav>
+        <a class="source-link" href="https://github.com/worxbend/camx-pro"
+          >Source <svg aria-hidden="true" focusable="false" class="icon"><use href="#out" /></svg
+        ></a>
+      </header>
+    </div>
     <main id="main">
-      <section class="hero">
-        <div class="hero-copy">
-          <p class="overline">OPEN HARDWARE / P3 PROTOTYPE</p>
-          <h1>A new angle<br />on your camera.</h1>
-          <p class="lead">
-            Your Anker webcam. A printable U-frame. Two geared steppers that put the view in motion.
-          </p>
-          <div class="actions">
-            <a class="button primary" href="viewer.html">Explore the 3D assembly <span>↗</span></a
-            ><a class="text-link" href="#build">Build the prototype ↓</a>
+      <div class="hero-surface">
+        <section class="hero wrap" aria-labelledby="hero-title">
+          <div class="hero-copy">
+            <h1 id="hero-title">Static is<br />overrated.</h1>
+            <p>A printable pan–tilt rig for your Anker C200. Made to move. Built by you.</p>
+            <div class="hero-actions">
+              <button class="button button-apricot" id="hero-play" disabled>
+                <svg aria-hidden="true" focusable="false" class="icon filled">
+                  <use href="#play" /></svg
+                >Play with the rig</button
+              ><a class="text-link" href="#build"
+                >Get the files
+                <svg aria-hidden="true" focusable="false" class="icon"><use href="#arrow" /></svg
+              ></a>
+            </div>
           </div>
-          <p class="prototype-note">
-            <span></span>Engineering fit prototype. Bench qualification remains open.
-          </p>
-        </div>
-        <figure class="hero-model">
-          <img
-            src="downloads/images/three_quarter.png"
-            alt="Actual P3 CAD: intact Anker webcam in a rounded U-shaped frame above a compact base"
-            width="1200"
-            height="1000"
-            fetchpriority="high"
-          />
-          <figcaption>ACTUAL CAD GEOMETRY <span>REVISION P3</span></figcaption>
-        </figure>
-      </section>
-      <div class="spec-strip">
-        <div><strong>4:1</strong><span>Planetary pan reduction</span></div>
-        <div><strong>2:1</strong><span>Concealed belt tilt</span></div>
-        <div><strong>180 mm</strong><span>A1 mini print envelope</span></div>
-        <div><strong>ESP32</strong><span>Local Wi-Fi control</span></div>
-      </div>
-      <section class="explore" id="explore">
-        <div class="section-head">
-          <div>
-            <p class="overline">INSPECT THE DESIGN</p>
-            <h2>Every part, in perspective.</h2>
-          </div>
-          <a class="text-link" href="viewer.html">Open full CAD viewer ↗</a>
-        </div>
-        <div class="preview" id="preview">
-          <img
-            src="downloads/images/cutaway.png"
-            alt="Transparent CAD cutaway showing the electronics and mechanical components"
-            width="1200"
-            height="1000"
-            loading="lazy"
-          />
-          <div class="preview-caption">
-            <h3>Get inside the assembly.</h3>
-            <p>
-              Orbit the model, inspect the planetary drive, and explore the target motion envelope.
-            </p>
-            <button class="button primary" id="load-viewer">
-              Load interactive preview <span>↗</span></button
-            ><small>Loads a 14 MB model. No motor connection.</small>
-          </div>
-        </div>
-      </section>
-      <section class="mechanism" id="mechanism">
-        <figure>
-          <img
-            src="downloads/images/planetary_actuator.png"
-            alt="CAD view of the coaxial planetary pan actuator, four planet gears and independent output bearings"
-            width="1200"
-            height="1000"
-            loading="lazy"
-          />
-          <figcaption>COAXIAL PAN ACTUATOR / 20T SUN + 60T RING</figcaption>
-        </figure>
-        <div>
-          <p class="overline">ENGINEERED AROUND YOUR HARDWARE</p>
-          <h2>Small motors.<br />A supported mechanism.</h2>
-          <p>
-            The pan motor sits inside the stationary base and drives a four-planet carrier. Two
-            output bearings carry the upper assembly independently of the motor shaft.
-          </p>
-          <p>
-            The tilt motor sits low behind the camera. A concealed 20T/40T belt drives the
-            bearing-supported cradle, keeping the U-frame clean and the original webcam intact.
-          </p>
-          <dl class="mechanical-details">
-            <div>
-              <dt>Motors</dt>
-              <dd>2 × 28BYJ-48, 5 V / ULN2003</dd>
+          <div class="hero-model">
+            <div class="scene" id="hero-scene" aria-label="Interactive CAMX Pro assembly">
+              <div class="scene-status" role="status">
+                <span class="load-mark"></span><span>Assembling your angle…</span
+                ><small>Loading the real CAD · 14 MB</small>
+              </div>
             </div>
-            <div>
-              <dt>Camera</dt>
-              <dd>Anker PowerConf C200, original USB</dd>
-            </div>
-            <div>
-              <dt>Target travel</dt>
-              <dd>Pan ±160° / tilt −30° to +90°</dd>
-            </div>
-            <div>
-              <dt>Initial firmware limits</dt>
-              <dd>Pan ±20° / tilt ±15°</dd>
-            </div>
-          </dl>
-          <a class="text-link" href="downloads/assembly/planetary-actuator.step"
-            >Download the actuator STEP ↗</a
-          >
-        </div>
-      </section>
-      <section class="control-section">
-        <div>
-          <p class="overline">THREE WAYS TO WORK</p>
-          <h2>From model<br />to movement.</h2>
-          <p>
-            The CAD inspector explores geometry. The web and terminal remotes control the ESP32 over
-            your local network. Webcam video stays on its own USB connection.
-          </p>
-        </div>
-        <div class="control-list">
-          <article>
-            <span>01</span>
-            <div>
-              <h3>Inspect the assembly</h3>
-              <p>Real CAD, part visibility, exploded views, and pan/tilt previews.</p>
-              <a href="viewer.html">Open the CAD viewer ↗</a>
-            </div>
-          </article>
-          <article>
-            <span>02</span>
-            <div>
-              <h3>Control from the browser</h3>
-              <p>
-                Solid.js 2 remote with named presets, held and diagonal jog, smooth synchronized
-                moves, manual reference and latched STOP. The hosted version is an offline demo.
-              </p>
-              <a href="control/?demo=1">Try the remote demo ↗</a>
-            </div>
-          </article>
-          <article>
-            <span>03</span>
-            <div>
-              <h3>Stay in the terminal</h3>
-              <p>
-                A Scala application built with Glyphora: bounded straight and diagonal steps, named
-                presets, motion feel and device diagnostics.
-              </p>
-              <a href="https://github.com/worxbend/camx-pro/tree/main/apps/tui"
-                >Run the Glyphora remote ↗</a
+            <div class="model-toolbar">
+              <div class="mode-switch" role="group" aria-label="Assembly appearance">
+                <button data-mode="exterior" aria-pressed="true" disabled>Exterior</button
+                ><button data-mode="xray" aria-pressed="false" disabled>X-ray</button
+                ><button data-mode="exploded" aria-pressed="false" disabled>Exploded</button>
+              </div>
+              <button
+                class="round-button"
+                id="hero-reset"
+                aria-label="Reset view"
+                title="Reset view"
+                disabled
               >
+                <svg aria-hidden="true" focusable="false" class="icon"><use href="#reset" /></svg>
+              </button>
             </div>
-          </article>
+            <p class="orbit-hint">
+              <svg aria-hidden="true" focusable="false" class="icon"><use href="#orbit" /></svg>Drag
+              to orbit
+              <span>· Arrow keys to rotate</span>
+            </p>
+          </div>
+        </section>
+        <div class="specs wrap" aria-label="Design at a glance">
+          <div>
+            <svg aria-hidden="true" focusable="false"><use href="#gear" /></svg
+            ><span>4:1 planetary pan</span>
+          </div>
+          <div>
+            <svg aria-hidden="true" focusable="false"><use href="#belt" /></svg
+            ><span>2:1 belt tilt</span>
+          </div>
+          <div>
+            <svg aria-hidden="true" focusable="false"><use href="#cube" /></svg
+            ><span>47 printable parts</span>
+          </div>
+          <div>
+            <svg aria-hidden="true" focusable="false"><use href="#chip" /></svg
+            ><span>Local control</span>
+          </div>
+        </div>
+      </div>
+      <section class="inside-section" id="inside" aria-labelledby="inside-title">
+        <div class="wrap">
+          <div class="section-heading">
+            <h2 id="inside-title">Good looks.<br />Better moves.</h2>
+            <p>
+              Two small motors. A planetary pan drive. A concealed tilt belt. The camera stays
+              intact, and the clever bits stay inside.
+            </p>
+          </div>
+          <div class="inside-grid">
+            <figure class="mechanism">
+              <div class="scene" id="inside-scene" aria-label="Exploded CAMX Pro mechanism">
+                <div class="scene-status" role="status">Getting into the details…</div>
+              </div>
+              <figcaption>The actual P3 assembly. Every part inspectable.</figcaption>
+            </figure>
+            <div class="mechanism-notes">
+              <details name="mechanism" open>
+                <summary>
+                  <span class="detail-number">01</span>Pan, with a plan.<span
+                    class="detail-plus"
+                    aria-hidden="true"
+                  ></span>
+                </summary>
+                <div class="detail-body">
+                  <p>
+                    A 4:1 planetary reduction puts the turn in pan. Independent bearings support the
+                    upper assembly.
+                  </p>
+                  <a class="text-link" href="viewer.html"
+                    >Explore the full CAD
+                    <svg aria-hidden="true" focusable="false" class="icon"><use href="#out" /></svg
+                  ></a>
+                </div>
+              </details>
+              <details name="mechanism">
+                <summary>
+                  <span class="detail-number">02</span>Tilt without the tangle.<span
+                    class="detail-plus"
+                    aria-hidden="true"
+                  ></span>
+                </summary>
+                <div class="detail-body">
+                  <p>
+                    A hidden 2:1 belt drive tilts the cradle. A central cable passage keeps the USB
+                    connection close to the pan axis.
+                  </p>
+                  <a class="text-link" href="downloads/images/cutaway.png"
+                    >See the cutaway
+                    <svg aria-hidden="true" focusable="false" class="icon"><use href="#out" /></svg
+                  ></a>
+                </div>
+              </details>
+              <details name="mechanism">
+                <summary>
+                  <span class="detail-number">03</span>Your camera. Still yours.<span
+                    class="detail-plus"
+                    aria-hidden="true"
+                  ></span>
+                </summary>
+                <div class="detail-body">
+                  <p>
+                    The Anker PowerConf C200 sits intact in its printed cradle. ESP32 handles motion
+                    locally; your video stays on USB.
+                  </p>
+                  <a
+                    class="text-link"
+                    href="https://github.com/worxbend/camx-pro/blob/main/hardware/docs/assembly.md"
+                    >Read the assembly guide
+                    <svg aria-hidden="true" focusable="false" class="icon"><use href="#out" /></svg
+                  ></a>
+                </div>
+              </details>
+            </div>
+          </div>
+          <div class="motion-lab" aria-labelledby="motion-title">
+            <div class="lab-heading">
+              <h3 id="motion-title">Try a different angle.</h3>
+              <p>A 3D preview. No hardware connected.</p>
+            </div>
+            <div class="range-control">
+              <label for="pan">Pan <output id="pan-value" for="pan">0°</output></label
+              ><input id="pan" type="range" min="-20" max="20" step="1" value="0" disabled />
+            </div>
+            <div class="range-control">
+              <label for="tilt">Tilt <output id="tilt-value" for="tilt">0°</output></label
+              ><input id="tilt" type="range" min="-15" max="15" step="1" value="0" disabled />
+            </div>
+            <button class="button button-dark" id="diagonal-play" disabled>
+              <svg aria-hidden="true" focusable="false" class="icon filled">
+                <use href="#play" /></svg
+              ><span>Play diagonal</span>
+            </button>
+          </div>
+          <div class="studio-tools" aria-label="Customize and share the preview">
+            <fieldset class="finishes">
+              <legend>Make it yours</legend>
+              <button
+                data-finish="graphite"
+                class="swatch graphite"
+                aria-label="Graphite finish"
+                aria-pressed="true"
+                disabled
+              ></button
+              ><button
+                data-finish="clay"
+                class="swatch clay"
+                aria-label="Clay finish"
+                aria-pressed="false"
+                disabled
+              ></button
+              ><button
+                data-finish="lilac"
+                class="swatch lilac"
+                aria-label="Lilac finish"
+                aria-pressed="false"
+                disabled
+              ></button
+              ><span id="finish-label">Graphite</span>
+            </fieldset>
+            <div class="export-tools">
+              <button class="text-button" id="share-pose" disabled>
+                Share this angle
+                <svg aria-hidden="true" focusable="false" class="icon">
+                  <use href="#out" />
+                </svg></button
+              ><button class="text-button" id="save-image" disabled>
+                Save a render
+                <svg aria-hidden="true" focusable="false" class="icon">
+                  <use href="#download" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <p class="studio-message" id="studio-message" role="status"></p>
         </div>
       </section>
-      <section id="build" class="build-section">
-        <div class="section-head">
-          <div>
-            <p class="overline">P3 MANUFACTURING SNAPSHOT</p>
-            <h2>Start at the workbench.</h2>
-          </div>
-          <a class="button primary" href="downloads/camx-pro-prototype.zip"
-            >Download prototype ZIP ↗</a
-          >
-        </div>
-        <div class="build-columns">
-          <div>
-            <h3>Print, measure, assemble.</h3>
-            <p>
-              47 printable parts, individual STL files, assembly STEP, geometry-only 3MF plates,
-              drawings and assembly instructions. The source is parametric Python + build123d.
-            </p>
-            <p>
-              Designed for the Bambu Lab A1 mini with PLA and an assumed 0.4 mm nozzle. Start with
-              the fit coupon and verify your actual camera, connectors and hardware before printing
-              the full assembly.
-            </p>
-            <div class="download-links">
-              <a href="downloads/assembly/camx-pro.step">Complete assembly STEP ↗</a
-              ><a href="downloads/engineering.pdf">Engineering drawings PDF ↗</a
-              ><a href="downloads/manifest.json">Dimensions & build manifest ↗</a>
+      <section class="build-section" id="build" aria-labelledby="build-title">
+        <div class="wrap">
+          <div class="build-grid">
+            <div class="build-copy">
+              <h2 id="build-title">Some assembly.<br />All attitude.</h2>
+              <p>Print the parts. Bring your own camera.<br />Make it yours.</p>
+              <a class="button button-apricot" href="downloads/camx-pro-prototype.zip" download
+                ><svg aria-hidden="true" focusable="false" class="icon">
+                  <use href="#download" /></svg
+                >Download the build kit</a
+              >
+              <p class="qualification">
+                <span class="status-dot"></span>Printed parts fit, confirmed by the maker.<br />Powered
+                motor testing is next.
+              </p>
+            </div>
+            <div class="build-resources">
+              <div class="build-visual">
+                <img
+                  id="build-render"
+                  alt="CAMX Pro printable camera rig"
+                  src="downloads/images/three_quarter.png"
+                  loading="lazy"
+                  width="640"
+                  height="480"
+                />
+              </div>
+              <div class="resource-list">
+                <a href="downloads/assembly/camx-pro.step" download
+                  ><svg aria-hidden="true" focusable="false" class="icon"><use href="#cube" /></svg
+                  ><span>Assembly STEP<small>The complete P3 model</small></span
+                  ><svg aria-hidden="true" focusable="false" class="icon">
+                    <use href="#out" /></svg></a
+                ><a href="downloads/engineering.pdf"
+                  ><svg aria-hidden="true" focusable="false" class="icon"><use href="#file" /></svg
+                  ><span>Engineering drawings<small>Dimensions, sections, details</small></span
+                  ><svg aria-hidden="true" focusable="false" class="icon">
+                    <use href="#out" /></svg></a
+                ><a href="downloads/manifest.json" download
+                  ><svg aria-hidden="true" focusable="false" class="icon"><use href="#file" /></svg
+                  ><span>Build manifest<small>Parts, geometry, and design parameters</small></span
+                  ><svg aria-hidden="true" focusable="false" class="icon">
+                    <use href="#out" /></svg></a
+                ><a href="https://github.com/worxbend/camx-pro/blob/main/hardware/docs/assembly.md"
+                  ><svg aria-hidden="true" focusable="false" class="icon"><use href="#file" /></svg
+                  ><span>Assembly guide<small>From your print bed to your desk</small></span
+                  ><svg aria-hidden="true" focusable="false" class="icon"><use href="#out" /></svg
+                ></a>
+              </div>
             </div>
           </div>
-          <aside class="qualification">
-            <h3>What is verified?</h3>
-            <p>
-              Local geometry, mechanical interfaces, motion studies, meshes and print-layer checks
-              have corresponding P3 verification reports.
-            </p>
-            <h3>What still needs a bench?</h3>
-            <p>
-              Actual fit, loaded motor torque, cable behavior, PLA heat and creep. Digital checks do
-              not establish these. This is a fit prototype, not a production-qualified print
-              release.
-            </p>
-            <a
-              href="https://github.com/worxbend/camx-pro/blob/main/hardware/docs/p3-verification.md"
-              >Read the verification record ↗</a
-            >
-          </aside>
+          <div class="control-room">
+            <div>
+              <h3>Pick your control room.</h3>
+              <p>Local control. Your video stays on USB.</p>
+            </div>
+            <a href="control/?demo=1"
+              >Browser demo
+              <svg aria-hidden="true" focusable="false" class="icon"><use href="#out" /></svg></a
+            ><a href="https://github.com/worxbend/camx-pro/tree/main/apps/tui"
+              >Terminal remote
+              <svg aria-hidden="true" focusable="false" class="icon"><use href="#out" /></svg
+            ></a>
+          </div>
+          <footer class="site-footer">
+            <a class="wordmark" href="#rig">CAMX PRO</a
+            ><span>Made by <a href="https://github.com/worxbend">worxbend</a></span>
+            <div>
+              <a href="https://github.com/worxbend/camx-pro">Source</a
+              ><a href="https://github.com/worxbend/camx-pro/issues"
+                >Report an issue
+                <svg aria-hidden="true" focusable="false" class="icon"><use href="#out" /></svg
+              ></a>
+            </div>
+          </footer>
         </div>
-      </section>
-      <section class="docs-links">
-        <h2>Build with the source.</h2>
-        <a href="https://github.com/worxbend/camx-pro/blob/main/hardware/docs/assembly.md"
-          >Assembly guide ↗</a
-        ><a href="https://github.com/worxbend/camx-pro/tree/main/firmware">ESP32 firmware ↗</a
-        ><a href="https://github.com/worxbend/camx-pro/blob/main/docs/controllers.md"
-          >Controller guide ↗</a
-        ><a href="https://github.com/worxbend/camx-pro">Source repository ↗</a>
       </section>
     </main>
-    <footer>
-      <a class="brand" href="./">CAMX PRO</a><span>Open mechanical development by worxbend.</span
-      ><a href="https://github.com/worxbend/camx-pro/issues">Report an issue ↗</a>
-    </footer>
+    <dialog id="share-dialog" aria-labelledby="share-title">
+      <form method="dialog">
+        <button class="dialog-close round-button" aria-label="Close share dialog">×</button>
+        <h2 id="share-title">Your angle. Pass it on.</h2>
+        <p>This link remembers the pose, finish, and assembly view.</p>
+        <label for="share-url">Preview link</label
+        ><input id="share-url" type="url" readonly /><button
+          type="button"
+          class="button button-dark"
+          id="copy-link"
+        >
+          Copy link
+        </button>
+        <p id="copy-status" role="status"></p>
+      </form>
+    </dialog>
+    <noscript
+      ><p class="noscript">
+        Enable JavaScript to explore the 3D model. All build downloads and guides work without it.
+      </p></noscript
+    >
     <script type="module" src="/src/landing.js"></script>
   </body>
 </html>

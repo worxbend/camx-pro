@@ -3,12 +3,24 @@
 CAMX Pro has independently buildable mechanical, embedded, browser and terminal
 projects. Keep hardware control separate from geometry inspection.
 
+CAMX Pro owns its source, device protocol, configuration and release lifecycle.
+A fresh checkout builds with its declared toolchains and package dependencies;
+no sibling checkout, cross-repository symlink or external project's generated
+output is required. Website CAD downloads come from this repository's pinned
+releases and can be regenerated from `hardware/`.
+
+Internal npm packages use the `@camx-pro/*` scope. The bridge reads
+`CAMX_PRO_DEVICE_URL` and `CAMX_PRO_PORT`; the terminal remote reads
+`CAMX_PRO_API_TOKEN`. Unscoped environment variables are not configuration
+fallbacks. Device settings use the `camx-pro-v1` NVS namespace, and browser tokens
+stay in memory. Compatibility promises apply to CAMX Pro's own versioned API.
+
 | Directory | Responsibility | Build/test owner |
 | --- | --- | --- |
 | `hardware/` | Parametric build123d geometry, mechanical tests, engineering docs and reference photos | Python / `hardware/pyproject.toml` |
 | `firmware/` | ESP32 adapter, portable C++ motion engine, embedded fallback panel | PlatformIO / native C++ tests |
-| `apps/site/` | Project overview and Three.js CAD inspector | npm workspace `@camx/site` |
-| `apps/remote/` | Solid.js 2 browser remote and demo | npm workspace `@camx/remote` |
+| `apps/site/` | Project overview and Three.js CAD inspector | npm workspace `@camx-pro/site` |
+| `apps/remote/` | Solid.js 2 browser remote and demo | npm workspace `@camx-pro/remote` |
 | `apps/tui/` | Scala/Glyphora terminal remote | Pinned Mill build |
 | `packages/control/` | Web remote's session ordering, HTTP transport and UI simulator | Node tests |
 | `packages/bridge/` | Loopback-only static host and bounded ESP32 proxy | Node HTTP tests |
@@ -25,7 +37,7 @@ projects. Keep hardware control separate from geometry inspection.
   project. Mechanical audits belong in `hardware/tools/`; native firmware checks
   belong in `firmware/tools/`; terminal checks belong in `apps/tui/scripts/`.
 - JavaScript packages use `src/` and `test/`. Import public package
-  exports (for example `@camx/control`), not another project's internal files.
+  exports (for example `@camx-pro/control`), not another project's internal files.
 - Put tests that exercise multiple projects in `tests/integration/`. Keep
   compatibility fixtures in `contracts/` and generate them from the firmware.
 - Use root `tools/` only for automation that crosses project boundaries. Keep
@@ -52,7 +64,7 @@ it together with this document and the README.
 ## Interfaces and publishing
 
 The [firmware API](../firmware/docs/api.md) is the shared language-independent control contract.
-The web app imports `@camx/control` (its only consumer today); the Scala client
+The web app imports `@camx-pro/control` (its only consumer today); the Scala client
 implements the same contract and tests the same firmware-generated state fixture.
 Both read `api_minor` and offer firmware 1.1.0 features only when the device reports
 them; with 1.0.0 firmware they hide those features and never send their commands. Its controls use degree

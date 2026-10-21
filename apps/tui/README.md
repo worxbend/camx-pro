@@ -8,9 +8,15 @@ The pinned Mill launcher and published Maven dependencies need no sibling checko
 ./mill app.run --url http://DEVICE_IP
 ./mill app.test
 ./mill app.assembly
+python3 scripts/test_environment.py
+python3 scripts/test_pty.py
 ```
 
-Live mode prompts for the API token or reads `CAMX_API_TOKEN`. `--json` reads state
+The packaged checks run after assembly, using only a loopback device fixture
+and a demo terminal. The environment check verifies that an unrelated token
+cannot configure this application.
+
+Live mode prompts for the API token or reads `CAMX_PRO_API_TOKEN`. `--json` reads state
 once without moving anything. Tab/mouse selects controls; Alt+arrows request bounded
 angle steps and Alt+y/u/b/n diagonal ones (up-left, up-right, down-left, down-right);
 Esc requests STOP; q quits outside text entry.

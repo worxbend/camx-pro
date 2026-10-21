@@ -13,10 +13,10 @@
     "node": ">=24"
   },
   "scripts": {
-    "dev:site": "npm run dev --workspace @camx/site",
-    "dev:remote": "npm run dev --workspace @camx/remote",
-    "build": "npm run build --workspace @camx/remote && npm run build --workspace @camx/site && node tools/website/build.mjs",
-    "build:remote": "npm run build --workspace @camx/remote",
+    "dev:site": "npm run dev --workspace @camx-pro/site",
+    "dev:remote": "npm run dev --workspace @camx-pro/remote",
+    "build": "npm run build --workspace @camx-pro/remote && npm run build --workspace @camx-pro/site && node tools/website/build.mjs",
+    "build:remote": "npm run build --workspace @camx-pro/remote",
     "bridge": "node packages/bridge/src/server.mjs",
     "test": "node --test packages/*/test/*.test.mjs",
     "test:browser": "playwright test",

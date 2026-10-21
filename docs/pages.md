@@ -4,37 +4,33 @@ The project overview lives at `/camx-pro/`; the full CAD inspector lives at
 `/camx-pro/viewer.html`. Both are built together by Vite. Relative asset URLs
 support the GitHub project subpath and a local static preview.
 
-## Design contract
+## Design and interaction
 
-The overview introduces the actual P3 mechanism, its printable construction,
-firmware and current qualification status. Opening the CAD inspector is the
-primary action. Real CAD renders lead; no unrelated stock imagery or product
-claims are used. The existing dark viewer remains a focused inspection tool.
+The landing page uses lavender (`#e4ddf4`), dark plum (`#20142b`), apricot
+(`#ff8b5c`) and warm paper (`#faf9f6`). Anton display type and Manrope body type
+are self-hosted through pinned npm font packages. No third-party font or model
+service is contacted at runtime.
 
-- Palette: drawing background `#e7ece8`, paper `#f8faf7`, ink `#20372e`,
-  secondary text `#51645a`, control green `#285f47`, rules `#c6d1c8`.
-- Type: Avenir Next/Trebuchet/system sans; large plain headings, readable body
-  copy, sentence-case navigation and controls. No remote font dependency.
-- Layout: left-aligned project introduction beside a large actual-CAD image;
-  a lazy interactive preview; illustrated mechanism explanation; firmware,
-  qualification status and named download/documentation links.
-- Mobile: stacked content, wrapped navigation, usable viewer controls, no
-  horizontal scrolling. Keyboard focus stays visible. Loading/error/static
-  fallback states remain useful without WebGL.
+Three sections introduce the rig, expose its mechanism and provide build files.
+The hero loads the real 103-part P3 GLB automatically (approximately 14 MB).
+A second, exploded assembly initializes near the viewport and shares the cached
+model download and geometry. Each stage owns independent joints and materials.
+The lower build section reuses a rendered image, avoiding a third WebGL context.
 
-```text
-Project navigation
-Introduction + actions | actual CAD rendering
-Hardware and print specifications
-Interactive preview + full viewer link
-Planetary rendering   | mechanical explanation
-Firmware              | build / qualification status
-Downloads and documentation
-```
+- Exterior, X-ray and exploded modes; pointer orbit and keyboard orbit/zoom.
+- Pan/tilt sliders and a finite, explicit two-axis animation; this is a visual
+  demonstration, not a simulation of the firmware's timing or physical qualification.
+- Three printed-part finish previews, transparent PNG export and shareable pose URLs.
+- Accessible native accordion and share dialog, visible focus and reduced-motion
+  support. Motion stops offscreen or when the tab is hidden. Idle scenes render only
+  when their state changes. Vertical touch scrolling stays available over the model.
+- Missing assets or unavailable WebGL show a static preview and retry control.
+  Downloads and guides remain normal links, including with JavaScript disabled.
 
-The palette follows the CAD drawing background and existing viewer rather than
-adding a separate marketing theme. The large model is the primary visual;
-technical information uses simple lists and tables instead of repeated cards.
+Implementation: `src/landing.js` coordinates the page; `src/studio-scene.js` owns
+rendering and camera interaction; `src/cad-model.js` loads and assembles CAD;
+`src/kinematics.js` is shared with the existing full inspector. HTML and CSS remain
+in `index.html` and `src/landing.css`. The full inspector has its own entry point.
 
 ## Versioned model assets
 
@@ -62,8 +58,11 @@ npm run test:browser
 
 Browser tests need Chromium installed with
 `npx playwright install chromium`. The static site is `apps/site/dist`.
-Use `npm --workspace @camx/site run preview` to inspect it. The project page loads only
-small images until someone explicitly opens an interactive model.
+Use `npm --workspace @camx-pro/site run preview` to inspect the production build, or
+`npm run dev:site -- --port 5173` for Vite development. The hero loads the pinned GLB
+on entry; its loading state discloses the download size. Browser tests cover real
+rendering, view changes, pose links, PNG export, keyboard input, reduced motion,
+320–1440 px layouts, and missing-model/WebGL fallbacks.
 
 ## Deployment
 

@@ -6,6 +6,14 @@
 remotes. Each project owns its source, tests, configuration and generated output; see
 [docs/architecture.md](docs/architecture.md) for dependency rules.
 
+CAMX Pro is standalone. Keep its implementation, tests, configuration and assets
+independent of sibling repositories. Do not introduce source imports, symlinks,
+build steps or runtime configuration that depend on another checkout. Use
+`@camx-pro/*` for local npm packages and `CAMX_PRO_*` for application environment
+variables. Third-party libraries use the declared package dependencies; generated
+release assets belong to this repository. Define behavior from this project's
+contracts and requirements rather than another project's implementation.
+
 - `hardware/`: build123d CAD (`cad/`), mechanical tests and audit tools, engineering docs.
 - `firmware/`: PlatformIO project. Portable C++17 in `include/camx/` (motion profile,
   controller, protocol, storage, status), the ESP32 adapter in `src/main.cpp`, the
@@ -33,7 +41,8 @@ Run from the repository root unless noted; `make help` lists the shared targets.
   `node firmware/tools/test_ui.mjs` (firmware panel in Chromium).
 - `npm run assets:fetch && npm run build`, then `npm run test:browser` (integration).
 - `cd apps/tui && ./mill app.test` (JDK 25); `./mill app.assembly` and
-  `python3 apps/tui/scripts/test_pty.py` for the packaged terminal check.
+  `python3 apps/tui/scripts/test_pty.py` and `python3 apps/tui/scripts/test_environment.py`
+  for packaged terminal and configuration checks.
 - `make setup-hardware`, `make test-hardware`, `make export-hardware` — CAD (uv, Python 3.14).
 
 Use `git status --short`, `git diff` and `git diff --check` before committing.

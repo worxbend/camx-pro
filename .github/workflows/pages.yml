@@ -52,6 +52,7 @@ jobs:
       - run: java --enable-native-access=ALL-UNNAMED -jar out/app/assembly.dest/out.jar --demo --json
         working-directory: apps/tui
       - run: python3 apps/tui/scripts/test_pty.py
+      - run: python3 apps/tui/scripts/test_environment.py
   deploy:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     needs: [web, tui]

@@ -33,6 +33,10 @@ dense gear/tilt sweeps, cable checks and 69 whole-assembly poses.
 
 ## Remaining physical qualification
 
+On 21 October 2026 the owner confirmed that all parts are printed and fit.
+Motors have not yet been tested. See the [production-readiness review](../../docs/production-readiness.md)
+for the software findings and the remaining powered commissioning checks.
+
 | Area | Required evidence |
 |---|---|
 | Hardware fit | Actual C200 folded envelope, plug/boot, shafts, populated boards, bearing races and screw heads |
@@ -48,11 +52,11 @@ to be 0.4 mm from the “4mm” reply. Anker publishes approximate dimensions an
 mass, but no interface drawing: see [manufacturer data](c200-manufacturer-data.md).
 Final mounting dimensions still require the actual unit.
 
-CAD renders use simplified hardware envelopes. No physical prints, electrical
-measurements, motor motion or flashing have been performed. Finite sampling
+CAD renders use simplified hardware envelopes. Printing and fit are owner-confirmed;
+electrical measurements, motor motion and flashing remain unverified. Finite sampling
 does not prove continuous clearance; flexible-cable mechanics are not simulated.
 The CAD viewer and its model have local build/model checks; its historical
 interactive review had no connected browser. The new firmware remote was tested
 in local Chromium against the portable C++ controller. Actual ESP32 networking,
 electrical behavior and motor motion remain untested. Automatic sensor homing,
-legacy camx/OBS bridge adaptation and photorealistic desktop imagery remain later work.
+optional host-side automation and photorealistic desktop imagery remain later work.

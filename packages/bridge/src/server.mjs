@@ -48,7 +48,7 @@ export async function createControlServer({ deviceUrl = '', directory, port = 41
       target.pathname !== '/'
     )
       throw Error(
-        'CAMX_DEVICE_URL must be an HTTP(S) device origin without credentials, query, or path',
+        'CAMX_PRO_DEVICE_URL must be an HTTP(S) device origin without credentials, query, or path',
       );
   }
   const base = directory ?? fileURLToPath(new URL('../../../apps/remote/dist/', import.meta.url));
@@ -84,7 +84,7 @@ export async function createControlServer({ deviceUrl = '', directory, port = 41
         if (!target) {
           send(
             503,
-            'No device configured. Start with CAMX_DEVICE_URL=http://DEVICE_IP or use demo mode.',
+            'No device configured. Start with CAMX_PRO_DEVICE_URL=http://DEVICE_IP or use demo mode.',
           );
           return;
         }
@@ -227,14 +227,17 @@ export async function createControlServer({ deviceUrl = '', directory, port = 41
   return server;
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const port = Number(process.env.PORT ?? 4175);
-  const server = await createControlServer({ deviceUrl: process.env.CAMX_DEVICE_URL ?? '', port });
+  const port = Number(process.env.CAMX_PRO_PORT ?? 4175);
+  const server = await createControlServer({
+    deviceUrl: process.env.CAMX_PRO_DEVICE_URL ?? '',
+    port,
+  });
   server.listen(port, '127.0.0.1', () => {
-    console.log(`CAMX Pro Remote: http://127.0.0.1:${port}/control/`);
+    console.log(`CAMX Pro Remote: http://127.0.0.1:${server.address().port}/control/`);
     console.log(
-      process.env.CAMX_DEVICE_URL
+      process.env.CAMX_PRO_DEVICE_URL
         ? 'LAN device proxy configured (tokens are never logged).'
-        : 'No LAN device configured. Demo is available; add CAMX_DEVICE_URL to control hardware.',
+        : 'No LAN device configured. Demo is available; add CAMX_PRO_DEVICE_URL to control hardware.',
     );
   });
 }

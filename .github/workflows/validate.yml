@@ -69,4 +69,4 @@ jobs:
       - run: .venv/bin/python -m tools.stage_viewer
         working-directory: hardware
       - run: node apps/site/scripts/verify-model.mjs
-      - run: npm run build --workspace @camx/site
+      - run: npm run build --workspace @camx-pro/site

@@ -4,18 +4,26 @@ A printable pan–tilt camera for an intact **Anker PowerConf C200**, two 28BYJ-
 steppers, ULN2003 drivers and an ESP32. The P3 design combines a U-shaped camera
 frame, a **4:1 planetary pan actuator** and a **2:1 concealed tilt belt**.
 
+CAMX Pro is an independent project. Its CAD, firmware, controllers, tests and
+build tooling are maintained in this repository. Setup uses the declared package
+dependencies and this project's pinned release assets; no sibling repository is
+required. Local packages use `@camx-pro/*`, and runtime configuration uses
+`CAMX_PRO_*` environment variables.
+
 [Project page](https://worxbend.github.io/camx-pro/) · [3D CAD viewer](https://worxbend.github.io/camx-pro/viewer.html) · [Remote demo](https://worxbend.github.io/camx-pro/control/?demo=1)
 
 ![P3 CAD](hardware/docs/images/p3-three-quarter.png)
 
 Firmware 1.1.0 plans jerk-limited moves that bring pan and tilt to their targets
-together, so diagonals are straight. The web and terminal remotes and the firmware's
+with coordinated arrival. Both axes can move simultaneously; unequal motion profiles
+do not guarantee a geometrically straight pan/tilt path. The web and terminal remotes and the firmware's
 own panel offer diagonal control, runtime motion feel, retargeting, named presets and
 a last-pose hint; both remotes still work with 1.0.0 firmware.
 
-**Engineering fit prototype.** Physical fits, loaded torque, cable behavior and
-PLA heat/creep remain qualification gates. Read the
-[P3 verification record](hardware/docs/p3-verification.md) before printing.
+**Engineering prototype.** The maker confirms the printed parts fit. Powered motors
+have not been tested; loaded torque, cable behavior and PLA heat/creep remain
+qualification gates. See the [production-readiness review](docs/production-readiness.md)
+and [P3 verification record](hardware/docs/p3-verification.md).
 
 ## Repository structure
 
@@ -49,7 +57,7 @@ Requires Node 24. Install JavaScript dependencies once at the root:
 ```sh
 npm ci
 npm run build:remote
-CAMX_DEVICE_URL=http://DEVICE_IP npm run bridge
+CAMX_PRO_DEVICE_URL=http://DEVICE_IP npm run bridge
 # Open http://127.0.0.1:4175/control/ and enter the ESP32 API token.
 ```
 

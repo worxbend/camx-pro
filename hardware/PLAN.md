@@ -1,14 +1,13 @@
 # CAMX Pro — Parametric PTZ Design and Implementation Plan
 
-Prepared: 2026-10-20. Reference project: `../camx`, inspected at commit
-`800f05acccf26577ddd18de381491bd0af53b88a`, including its current local files.
+Prepared: 2026-10-20. Maintained requirements for the independent CAMX Pro project.
 
 This document is the implementation prompt for a new project in `camx-pro`.
 Implementation has progressed to the P3 parametric CAD revision, including
 corrections for the sixteen P2 audit findings, manufacturing exports and an
 inspection viewer. See `README.md`, `docs/status.md` and
 `docs/p3-design-closure.md` for the current milestone.
-Firmware and physical qualification remain pending.
+Firmware and controllers are implemented in this repository; physical qualification remains pending.
 All proposed dimensions and performance targets retain their verification status.
 
 ## 1. Implementation brief
@@ -41,48 +40,33 @@ These are design targets, not established safe limits. No continuous rotation,
 optical zoom, 4K upgrade, or camera video transport through the ESP32 is implied.
 The webcam remains connected directly to the host computer.
 
-## 2. What to retain from `../camx`
+## 2. Project ownership and requirements
 
-The existing project is a substantial servo-based prototype, not an empty
-starting point. Use its source patterns selectively.
+Keep implementation, tests, configuration, reference images and generated releases
+within CAMX Pro. Builds must work from this checkout with declared toolchains and
+package dependencies, without consulting another repository or its local files.
+Use this project's API and mechanical contracts as the source of truth.
 
-| Existing feature and evidence | Treatment in CAMX Pro |
+| Area | CAMX Pro requirement |
 | --- | --- |
-| `cad/model.py`, `cad/parameters.json`: build123d assembly, 13 main printable parts, fit coupon, separate hardware envelopes, print transforms, export manifest | Retain the parametric/export approach; redesign all servo interfaces and packaging around the actual steppers and two drivers. |
-| Original geometry: 100 × 82 × 38 mm base, Ø92 mm platform, 50 × 51 × 41 mm camera envelope, assumed 150 g camera | Historical comparison only. These are not verified dimensions for this build or a mandatory new enclosure size. |
-| 6805 pan bearing, opposite 625 tilt bearing, removable covers and camera mounting | Reuse load-path concepts; choose bearings from the new load, cable-bore, and packaging requirements. Existing ownership is unconfirmed. |
-| `firmware/src/main.cpp`, `include/motion.h`: PlatformIO/Arduino, two 50 Hz servo PWM channels, NVS calibration, HTTP and serial control | Preserve application behavior, replace PWM and pulse calibration with four-phase stepper control per motor. |
-| `include/motion_planner.h`, `lib/ruckig/`: vendored Ruckig 0.15.3, synchronized absolute trajectories, bounded acceleration/jerk, independent jogging | Evaluate reuse above a new deterministic phase scheduler. The current 20 ms servo update loop is not a stepper scheduler. Preserve upstream license/provenance. |
-| `jog_lease.h`, `connection_pause.h`: 100 ms client refresh, 500 ms jog lease, five-second command watchdog, stale-packet fencing | Preserve intent and regression cases; qualify stopping and reference validity for open-loop steppers. |
-| Firmware 0.5.2: disconnect/timeout holds preserve armed state; explicit STOP remains latched; boot is disarmed | Use source behavior rather than older conflicting README passages. Reconnection never resumes an interrupted command automatically. |
-| `client/`: SolidJS remote, held directions/diagonals, keyboard control, precision moves, presets, JSON backups, calibration, guides, activity log, demo | Adapt the existing UX. Replace servo microsecond fields and hardcoded angle bounds with stepper calibration and homing state. Presets are currently browser-local. |
-| `tools/serve_control.mjs`, `tools/stage_control.mjs`: localhost LAN bridge and ESP32 LittleFS client staging | Preserve offline/local operation and credential handling. |
-| `viewer/`: Vite/Three.js, real CAD GLB, orbit, pan/tilt preview, explosion, visibility, wireframe, downloads | Adapt to new parts and ranges; generate joint membership and pivots from CAD metadata instead of hardcoded servo part lists. |
-| `tests/`, `client/tests/`, viewer QA scripts, release tools and Actions | Retain useful test/package structure and add stepper, homing, combined-motion, cable, and manufacturing checks. |
+| CAD | Parametric assembly, fit coupons, hardware envelopes, print transforms and export manifests under `hardware/`. Choose dimensions and bearings from measured hardware, loads and cable clearances. |
+| Firmware | Four-phase stepper scheduling, calibrated steps and reductions, bounded motion profiles, authenticated HTTP, serial diagnostics and versioned device settings. |
+| Motion safety | Explicit reference and arm, a 500 ms jog lease, a five-second command watchdog, stale-command rejection and a latched STOP. Reconnection never resumes interrupted motion. |
+| Controllers | Web and terminal remotes with diagonal movement, bounded steps, named presets, calibration and offline demos, using the versioned firmware API. |
+| Local operation | An embedded firmware panel and repository-owned localhost bridge. Runtime configuration and credentials use project-specific names. |
+| Viewer | Real CAD GLB, motion preview, explosion, visibility and downloads, with joint membership and pivots generated from CAD metadata. |
+| Verification | Regression tests for controls, motion, cables and manufacturing; release evidence tied to the source revision that produced it. |
 
-Important migration findings:
-
-- Existing `/home` calls `move(0,0)`; it is **not physical homing**. Initial ARM
-  also assumes zero. Neither behavior establishes a stepper's position.
-- `axisConfigSafe()` limits motion to ±60° pan / ±25° tilt. Firmware, client,
-  demo, storage validators, viewer, and CAD must all adopt the new envelope.
-- Existing precision nudges compute absolute targets on the client. There is
-  no separate relative-position HTTP endpoint or WebSocket implementation.
-- `exports/validation.json` records **624 checks** with explicit limitations:
-  approximate hardware, sampled poses, no cable deformation or physical load
-  tests. This is an existing report, not a fresh test result. Its axis sweeps
-  do not validate all combined pan/tilt poses.
-- The original source has local changes. Leave `../camx` untouched. Copy only
-  reviewed source; exclude credentials, configured binaries, caches, old exports,
-  and release archives. Generate new artifacts in this repository.
-- The old audit reports limited firmware flash headroom and a Python dependency
-  conflict. Recheck dependencies and resource budgets during implementation;
-  do not inherit old audit conclusions or security-alert counts as current facts.
+Reference acknowledgment and moving to zero are distinct operations. Neither
+arming nor rebooting establishes a stepper's physical position. Firmware,
+clients, storage validators and CAD must agree on the validated travel envelope.
+Check flash, RAM, timing and dependency compatibility for this implementation.
+Generate and verify artifacts here; reports from other designs do not qualify it.
 
 ## 3. Photo evidence and hardware identification
 
 Use these references in this order: actual hardware, measured interfaces, desired
-appearance, then historical CAMX assumptions.
+appearance, then explicitly recorded provisional assumptions.
 
 | Reference | Observation and design consequence |
 | --- | --- |
@@ -95,15 +79,13 @@ appearance, then historical CAMX assumptions.
 | [Additional PTZ reference](references/photos/photo_3_2026-10-20_11-12-44.jpg) | Symmetric enclosed yoke and integrated base. Its advertising claims, display, and tally light are not project requirements. |
 
 The two supplied PNGs are preserved locally so this prompt does not depend on
-temporary attachment paths. Historical `../camx/photo_9_...jpg` and
-`photo_10_...jpg` also show the camera mounted on a support, but do not establish
-thread dimensions or engagement depth.
+temporary attachment paths. Reference photos do not establish mounting-thread
+dimensions or engagement depth; measure the actual camera interface.
 
 The camera resembles the PowerConf C200 family; this is a visual inference,
 not confirmed model identification. Check the underside label against
 [Anker's C200 product reference](https://www.anker.com/de/products/a3369).
-The ESP32 programming connector appears different from the old project's
-USB-C assumption; verify its type. The custom integration PCB and capacitor
+Verify the ESP32 programming connector type. The custom integration PCB and capacitor
 values are owner-reported and not independently established by these images.
 
 ### Measurements required before final mounting geometry
@@ -231,7 +213,7 @@ assumptions, not measured hardware dimensions or universal printer tolerances.
 Specify per-side versus diametral clearance explicitly.
 
 Use metal fasteners/axles or suitably rated bushings for primary load paths.
-Do not inherit the original experimental printed axle/nut as the default.
+Select axle and retention hardware from the load and service requirements.
 Design removable bearing retainers and calibrated insert or captive-nut pockets;
 avoid irreversible bearing press fits in the first prototype.
 
@@ -463,14 +445,14 @@ Requirements:
   size. A “print assembly” must exclude electronic hardware and fit-envelope
   solids. Supply separate reference-assembly and print-layout 3MF files.
 
-## 10. Firmware and control migration
+## 10. Firmware and control implementation
 
 Implement after the mechanical interfaces are defined; bench characterization
-may begin earlier. Preserve the existing local-control experience.
+may begin earlier. Keep controls usable over the local network without cloud services.
 
 ### Stepper motion core
 
-Replace LEDC servo output with configurable four-phase sequencing for each
+Implement configurable four-phase sequencing for each
 ULN2003. Use verified half-step sequencing as the initial mode; do not promise
 current-regulated microstepping from this driver.
 
@@ -483,7 +465,7 @@ after a delayed task. Define and test scheduler overrun handling.
 Calibrate per-axis emitted steps per motor-output revolution, external ratio,
 direction, zero offset, speed, acceleration, jerk, and safe travel. Do not infer
 position from wall-clock trajectory progress if required steps were not emitted.
-Ruckig reuse is conditional on flash, RAM, timing and step-quantization tests.
+Qualify the motion planner against flash, RAM, timing and step-quantization budgets.
 
 ### State and failure behavior
 
@@ -493,7 +475,7 @@ Ruckig reuse is conditional on flash, RAM, timing and step-quantization tests.
 - Ordinary absolute/relative moves and preset recall require valid reference.
 - Normal release and transport loss use a bounded stop appropriate to the
   stepper's dynamics; fence delayed packets and retain holding torque when safe.
-  Keep the existing connection-hold UX only if position remains trustworthy.
+  Retain a position reference only while it remains trustworthy.
 - Explicit STOP cancels future motion and remains latched. An abrupt emergency
   stop may lose steps: invalidate reference when physical follow-through is
   uncertain. A GPIO STOP is not an independent power-cut safety circuit.
@@ -511,9 +493,9 @@ treating provisional pin numbers as assembly instructions.
 
 ### API and browser client
 
-Retain HTTP first: `/status`, `/arm`, `/disarm`, `/move`, `/jog`, `/stop`,
-`/heartbeat` and calibration, with a versioned stepper schema. Add distinct
-reference-search, go-to-center and optional manual-reference commands.
+Use `GET /api/state` and `POST /api/command` with the versioned stepper schema in
+[the firmware API](../firmware/docs/api.md). Keep manual reference and go-to-center
+distinct. Automatic reference search requires qualified sensors and is not implemented.
 
 Add relative movement with explicit delta semantics, atomic axis validation,
 request IDs/deduplication and no blind retry of an additive command. Absolute
@@ -522,9 +504,9 @@ position estimate, target, faults, homing progress, current limits and capabilit
 Clearly label positions as estimates, not measurements.
 
 Keep authentication, bounded parsing, request-intent protection, in-memory token
-handling, LittleFS hosting, localhost bridge and offline demo. Use separate
-CAMX Pro storage/NVS namespaces and backup schema; reject incompatible servo
-calibration imports rather than silently interpreting pulse widths as steps.
+handling, the embedded firmware panel, localhost bridge and offline demo. Use
+CAMX Pro storage/NVS namespaces and a versioned settings schema; reject
+incompatible calibration data.
 
 Adapt remote, precision, preset and calibration views to reference state,
 asymmetric tilt limits and measured speeds. Disable unsafe controls while

@@ -1,29 +1,143 @@
 import { test, expect } from '@playwright/test';
 
-test('project page works at GitHub project prefix and loads CAD only on demand', async ({
+test('microsite renders real CAD, switches modes, shares poses and exports a render', async ({
   page,
 }) => {
   const errors = [],
     requests = [];
-  page.on('pageerror', (e) => errors.push(e.message));
-  page.on('request', (r) => requests.push(r.url()));
+  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('request', (request) => requests.push(request.url()));
   await page.goto('/camx-pro/');
-  await expect(page.getByRole('heading', { name: /A new angle/ })).toBeVisible();
-  expect(requests.some((u) => u.endsWith('.glb'))).toBe(false);
-  for (const width of [320, 768, 1440]) {
+  await expect(page).toHaveTitle('CAMX Pro — Static is overrated.');
+  await expect(page.getByRole('heading', { name: 'Static is overrated.' })).toBeVisible();
+  await expect(page.locator('vite-error-overlay')).toHaveCount(0);
+  await expect(page.locator('#hero-scene')).toHaveAttribute('data-ready', 'true', {
+    timeout: 30000,
+  });
+  const canvas = page.locator('#hero-scene canvas');
+  const original = await canvas.evaluate((element) => element.toDataURL());
+  await canvas.focus();
+  await page.keyboard.press('ArrowRight');
+  expect(await canvas.evaluate((element) => element.toDataURL())).not.toBe(original);
+  await page.getByRole('button', { name: 'X-ray', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'X-ray', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  expect(await canvas.evaluate((element) => element.toDataURL())).not.toBe(original);
+  await page.getByRole('button', { name: 'Exploded', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Exploded', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await page.getByRole('button', { name: 'Reset view', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Exterior', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await page.locator('#inside').scrollIntoViewIfNeeded();
+  await expect(page.locator('#inside-scene')).toHaveAttribute('data-ready', 'true', {
+    timeout: 30000,
+  });
+  // The second stage clones the cached CAD instead of fetching another 14 MB model.
+  expect(requests.filter((url) => url.endsWith('.glb'))).toHaveLength(1);
+  await page.locator('#pan').fill('12');
+  await page.locator('#tilt').fill('-7');
+  await expect(page.locator('#pan-value')).toHaveText('12°');
+  await expect(page.locator('#tilt-value')).toHaveText('-7°');
+  await page.getByRole('button', { name: 'Lilac finish' }).click();
+  await page.getByRole('button', { name: 'Share this angle' }).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  const shared = await page.getByLabel('Preview link').inputValue();
+  expect(new URL(shared).searchParams.get('pan')).toBe('12');
+  expect(new URL(shared).searchParams.get('tilt')).toBe('-7');
+  expect(new URL(shared).searchParams.get('finish')).toBe('lilac');
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('button', { name: 'Share this angle' })).toBeFocused();
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save a render' }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toBe('camx-pro-lilac-12--7.png');
+  expect(await download.failure()).toBeNull();
+  await page.goto(shared);
+  await expect(page.locator('#hero-scene')).toHaveAttribute('data-ready', 'true', {
+    timeout: 30000,
+  });
+  await expect(page.locator('#pan')).toHaveValue('12');
+  await expect(page.locator('#tilt')).toHaveValue('-7');
+  await expect(page.getByRole('button', { name: 'Lilac finish' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await page.getByRole('button', { name: 'Play with the rig' }).click();
+  await expect(page.locator('#diagonal-play')).toHaveAttribute('aria-pressed', 'true');
+  await expect.poll(() => page.locator('#pan').inputValue()).not.toBe('12');
+  await page.getByRole('button', { name: 'Play with the rig' }).click();
+  await expect(page.locator('#diagonal-play')).toHaveAttribute('aria-pressed', 'false');
+  expect(errors).toEqual([]);
+});
+
+test('microsite is responsive, keyboard accessible and respects reduced motion', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/camx-pro/?pan=Infinity&tilt=-999&view=invalid&finish=invalid');
+  await expect(page.locator('#hero-scene')).toHaveAttribute('data-ready', 'true', {
+    timeout: 30000,
+  });
+  await expect(page.locator('#pan')).toHaveValue('0');
+  await expect(page.locator('#tilt')).toHaveValue('-15');
+  await page.getByRole('button', { name: 'Play with the rig' }).click();
+  await expect(page.locator('#pan')).toHaveValue('18');
+  await expect(page.locator('#tilt')).toHaveValue('12');
+  await expect(page.locator('#studio-message')).toContainText('reduced-motion');
+  for (const width of [320, 390, 768, 1440]) {
     await page.setViewportSize({ width, height: 960 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
   }
-  await page.screenshot({ path: 'test-results/project-desktop.png', fullPage: true });
-  await page.getByRole('button', { name: 'Load interactive preview' }).click();
-  await page
-    .frameLocator('iframe')
-    .locator('#scene-state')
-    .filter({ hasText: 'REV P3' })
-    .waitFor({ timeout: 30000 });
-  expect(errors).toEqual([]);
+  await page.locator('summary').filter({ hasText: 'Tilt without the tangle.' }).click();
+  await expect(page.getByText('A hidden 2:1 belt drive', { exact: false })).toBeVisible();
+  await expect(page.getByText('A 4:1 planetary reduction', { exact: false })).toBeHidden();
+  await expect(page.getByRole('link', { name: 'Download the build kit' })).toHaveAttribute(
+    'href',
+    'downloads/camx-pro-prototype.zip',
+  );
+  await expect(page.getByRole('link', { name: 'Browser demo' })).toHaveAttribute(
+    'href',
+    'control/?demo=1',
+  );
+});
+
+test('microsite model download failure can recover through Retry', async ({ page }) => {
+  let unavailable = true;
+  await page.route('**/camx-pro.glb', (route) =>
+    unavailable ? route.fulfill({ status: 503, body: 'Unavailable' }) : route.continue(),
+  );
+  await page.goto('/camx-pro/');
+  const stage = page.locator('#hero-scene');
+  await expect(stage.getByAltText('CAMX Pro assembly preview')).toBeVisible();
+  await expect(stage.getByText('3D preview unavailable.', { exact: false })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Play with the rig' })).toBeDisabled();
+  unavailable = false;
+  await stage.getByRole('button', { name: 'Retry 3D preview' }).click();
+  await expect(stage).toHaveAttribute('data-ready', 'true', { timeout: 30000 });
+  await expect(page.getByRole('button', { name: 'Play with the rig' })).toBeEnabled();
+});
+
+test('microsite keeps build resources available without WebGL', async ({ page }) => {
+  await page.addInitScript(() => {
+    const original = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (type, ...args) {
+      if (type.includes('webgl')) return null;
+      return original.call(this, type, ...args);
+    };
+  });
+  await page.goto('/camx-pro/');
+  await expect(page.locator('#hero-scene').getByAltText('CAMX Pro assembly preview')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Download the build kit' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Play with the rig' })).toBeDisabled();
 });
 
 test('viewer loads actual 103-part assembly and all modes, joints and mobile controls work', async ({
@@ -72,6 +186,8 @@ test('Solid remote controls actual C++ firmware: reference, geared move, jog rel
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto('/control/');
+  await page.locator('#precision-controls > summary').click();
+  await page.locator('#motion-settings > summary').click();
   await page.getByLabel('API token').fill('test-token-123456789');
   await page.getByRole('button', { name: 'Connect', exact: true }).click();
   await expect(page.locator('.status-strip')).toContainText('Released');
@@ -130,6 +246,8 @@ test('Solid remote uses firmware 1.1 features on the C++ controller: diagonals, 
   const commands = async () => (await request.get('/test/commands')).json();
   const idle = () => expect.poll(async () => (await device()).moving).toBe(false);
   await page.goto('/control/');
+  await page.locator('#precision-controls > summary').click();
+  await page.locator('#motion-settings > summary').click();
   await page.getByLabel('API token').fill('test-token-123456789');
   await page.getByRole('button', { name: 'Connect', exact: true }).click();
   await expect(page.locator('.status-strip')).toContainText('Released');

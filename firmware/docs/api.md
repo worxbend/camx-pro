@@ -1,7 +1,7 @@
 # CAMX Pro firmware API v1
 
 The ESP32 controls movement only. The Anker C200 sends video directly to the
-host over USB. This API replaces camx's servo pulse/calibration protocol.
+host over USB. This versioned API is defined and maintained by CAMX Pro.
 
 **Firmware 1.1.0 (`"api_minor":1`)** adds only optional fields and operations to
 API v1: jerk-limited motion, synchronized pan/tilt arrival, runtime speed
@@ -97,8 +97,8 @@ against a monotonic clock; nothing is queued or replayed.
 
 * **Synchronized arrival.** For `move`, `relative`, `center` and `preset_move`, the axis
   with less to travel is stretched in time (speed, acceleration and jerk scale as
-  1/k, 1/k², 1/k³) so both arrive together and the camera follows a straight line in
-  pan/tilt. The 250 µs timer rebases the profile at every step, which lengthens a move
+  1/k, 1/k², 1/k³) to coordinate arrival. Different profile shapes mean the
+  pan/tilt path is not guaranteed to be a straight line. The 250 µs timer rebases the profile at every step, which lengthens a move
   by 0.1–2.8 % depending on the step rate (measured with an ideal timer across speed
   settings), so the two arrival times agree to within a few per cent, not exactly.
   Jog axes stay independent. `eta` reports the seconds of planned motion left, including
@@ -118,7 +118,7 @@ against a monotonic clock; nothing is queued or replayed.
 * **Braking** (zero jog, lease expiry, retarget) plans each axis's stop with the move's
   ceilings before the synchronization stretch, so the axis that was slowed down stops as
   promptly as the leading one. The axes stop independently; during a brake the path is
-  no longer exactly straight.
+  also not constrained to a straight line.
 * **Jog release** now takes a little longer than a trapezoid did, because the stop ramps
   its own acceleration down: about 0.5–0.7 s from full speed with the default jerk.
 
@@ -177,6 +177,6 @@ in `fault:"timing_fault"`; a subsequent move is rejected as stopped.
 
 Use the API from a host bridge for OBS/Stream Deck automation. Keep the token
 on the host, serialize commands, honor busy/latch states and send heartbeats
-while waiting for long moves. The old camx `/move`, `/jog`, servo pulse settings,
-WebSocket client and OBS bridge are not drop-in compatible. No WebSocket,
+while waiting for long moves. Integrations must use the routes and stepper
+command schema documented here. No WebSocket,
 OTA, DHCP discovery service or camera streaming is implemented in this release.

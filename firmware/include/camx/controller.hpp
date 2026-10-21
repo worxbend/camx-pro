@@ -138,7 +138,7 @@ class Controller {
         invalidate();
     }
     // Both axes start together and arrive together: the one with less to do is stretched in
-    // time to match the slower one, so the camera travels in a straight line in pan/tilt.
+    // time to match the slower one. Different profile shapes can still curve the pan/tilt path.
     // `speed` scales the top speed for this move only. A move requested while another is
     // in progress is refused with Busy unless `retarget` is set; then both axes brake
     // smoothly and the newest target starts from wherever they come to rest.

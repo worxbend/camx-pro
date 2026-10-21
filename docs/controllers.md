@@ -13,17 +13,21 @@ Requires Node 24. From the repository root:
 ```sh
 npm ci
 npm run build:remote
-CAMX_DEVICE_URL=http://DEVICE_IP npm run bridge
+CAMX_PRO_DEVICE_URL=http://DEVICE_IP npm run bridge
 # Open http://127.0.0.1:4175/control/
 ```
 
 Replace `DEVICE_IP` with the ESP32's actual LAN address. The bridge binds only
 to loopback, permits one configured private/LAN origin, validates Host/Origin,
 limits request bodies, forwards the Bearer token, and never follows redirects
-or retries commands. Set `PORT` to change its local port. Do not expose this
+or retries commands. Set `CAMX_PRO_PORT` to change its local port. Do not expose this
 server to the internet. The token is entered into the browser, cleared from the
 input on connection, retained in memory and never written to browser storage.
 Disconnect or close the tab to discard it.
+
+Use `CAMX_PRO_DEVICE_URL`, `CAMX_PRO_PORT` and `CAMX_PRO_API_TOKEN` for this
+project. The earlier `CAMX_DEVICE_URL`, `PORT` and `CAMX_API_TOKEN` names are
+ignored; update launch scripts and environment configuration accordingly.
 
 The [hosted remote](https://worxbend.github.io/camx-pro/control/?demo=1) is an
 **offline demo**. HTTPS GitHub Pages cannot directly operate the ESP32's local
@@ -36,15 +40,29 @@ are pinned because v2 is still a release candidate.
    their actual angles, acknowledge alignment, then confirm reference. After a
    clean release, firmware 1.1.0 shows where the mechanism last rested;
    **Use as reference angles** copies it into the fields. It is a hint: align first.
-3. Arm explicitly. Hold one of the eight directions to jog (25, 50 or 100 % of the
-   configured speed; corners drive pan and tilt together), or send a bounded step
-   (straight or diagonal), target angle or preset. Release a held direction to
-   decelerate. A press made while a status poll is in flight starts when it returns.
+3. Arm explicitly. Drag the joystick or hold a point on its pad: right/left pans,
+   up/down tilts, and diagonals drive both axes. Distance from center sets the
+   requested speed up to the selected 25%, 50% or 100% cap. The center dead zone
+   prevents small movements from starting a jog. Release to brake and recenter.
+   With the joystick focused, hold arrow keys (including pairs for diagonals);
+   release them to brake. **Esc** latches STOP. **Precision controls** exposes the
+   direction buttons, exact targets and bounded single/diagonal steps.
 4. STOP latches and retains holding torque. Support the mechanism before
    releasing coils; release invalidates the reference.
 
+The current firmware requires a complete brake before changing a jog's direction
+or speed. The joystick handles this automatically: it retains only the latest
+still-held vector and sends it after motion settles. Releasing, losing pointer
+capture, a cancelled touch, losing focus or STOP cancels pending joystick intent.
+Returning to the neutral zone brakes; the controller never arms automatically.
+The displayed percentages are requested speed fractions, while angle readouts
+remain open-loop estimates. Joystick input uses the existing API v1 commands and
+works with both supported firmware versions. Expand **Motion settings** for feel
+and stored profile configuration.
+
 On firmware 1.1.0 moves are jerk-limited and pan and tilt arrive together, so a
-target or diagonal step travels in a straight line. The remote then also offers:
+target or diagonal step moves both axes concurrently. The path can curve when
+the axes have different profile shapes. The remote then also offers:
 
 - **Move speed %** for the next move, step or recall, and **Retarget while moving**: a new
   target brakes the move in progress smoothly and then goes to the newest one.
@@ -79,7 +97,7 @@ cd apps/tui
 ```
 
 Live mode prompts for the API token before opening the terminal. For automation,
-provide `CAMX_API_TOKEN` through your environment/secret manager; avoid putting
+provide `CAMX_PRO_API_TOKEN` through your environment/secret manager; avoid putting
 literal secrets into shell history. `--demo` never contacts hardware.
 
 Use Tab/mouse to select controls. Enter actual pan/tilt angles, choose
@@ -132,6 +150,7 @@ operate the real TUI; HTTP tests use loopback mock devices. The demo transports
 are UI demonstrations, not evidence of mechanical or firmware timing accuracy.
 No physical device was flashed or moved by these tests.
 
-The implementation follows the published [Glyphora documentation](https://github.com/worxbend/glyphora/tree/v0.20.0),
-the [AirGradient Scala consumer](https://github.com/worxbend/airgradient-tui-scala),
-and the localhost bridge architecture in [camx](https://github.com/worxbend/camx).
+Both remotes implement this repository's [firmware API](../firmware/docs/api.md).
+The local bridge is maintained in `packages/bridge/`; it requires only this
+project's built web remote and an explicitly configured CAMX Pro device.
+The terminal UI uses the published [Glyphora library](https://github.com/worxbend/glyphora/tree/v0.20.0).

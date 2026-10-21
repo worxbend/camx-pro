@@ -16,7 +16,7 @@ const child=spawn(binary,[],{stdio:['pipe','pipe','inherit']});
 const pending=[];const commands=[];const errors=[];
 createInterface({input:child.stdout}).on('line',line=>pending.shift()?.(JSON.parse(line)));
 const exchange=body=>new Promise(resolve=>{pending.push(resolve);child.stdin.write(body+'\n');});
-let delayMove=false;
+let delayMove=false, armReplyGate=null, armAccepted=null, releaseArm=null;
 const server=createServer(async(req,res)=>{
   if(req.url==='/'){res.setHeader('Content-Type','text/html');res.end(readFileSync(join(root,'firmware/web/index.html')));return;}
   res.setHeader('Content-Type','application/json');
@@ -25,6 +25,7 @@ const server=createServer(async(req,res)=>{
   const command=req.method==='GET'?{op:'state'}:JSON.parse(body);
   commands.push(command);
   const next=await exchange(JSON.stringify(command));
+  if(command.op==='arm'&&armReplyGate){armAccepted?.();await armReplyGate;}
   if(delayMove&&command.op==='move')await new Promise(resolve=>setTimeout(resolve,400));
   res.statusCode=next.result==='ok'?200:409;res.end(JSON.stringify(next));
 });
@@ -65,6 +66,19 @@ try {
     }
     throw Error('Jog never started');
   }
+  // Connecting to an already armed controller does not grant movement ownership.
+  let outside=await state();
+  outside=await exchange(JSON.stringify({op:'reference',pan:0,tilt:0,epoch:outside.epoch,seq:outside.seq+1}));
+  outside=await exchange(JSON.stringify({op:'arm',epoch:outside.epoch,seq:outside.seq+1}));
+  await page.waitForFunction(()=>JSON.parse(document.querySelector('#diagnostics').textContent).armed);
+  assert.equal(await page.locator('#move').isDisabled(),true,'an observer must not move another session');
+  assert.equal(await page.locator('.jog').first().isDisabled(),true);
+  const observedAt=commands.length;
+  await page.evaluate(()=>request({op:'relative',pan:1,tilt:1}));
+  assert.equal(commands.slice(observedAt).some(c=>c.op==='relative'),false);
+  outside=await exchange('{"op":"state"}');
+  await exchange(JSON.stringify({op:'disarm',epoch:outside.epoch,seq:outside.seq+1}));
+  await page.waitForFunction(()=>!JSON.parse(document.querySelector('#diagnostics').textContent).armed);
   await click('reference','reference');await click('arm','arm');
   assert.equal((await state()).armed,true);
   await page.locator('#pan').fill('1');await page.locator('#tilt').fill('-1');
@@ -129,6 +143,18 @@ try {
   assert.equal((await state()).last_pose.valid,true);
   await page.locator('#useLastPose').click();
   assert.ok(Math.abs(Number(await page.locator('#refPan').inputValue())-2)<0.02);
+  // Losing focus while ARM has reached the controller must STOP even before its reply arrives.
+  await click('reference','reference');
+  armReplyGate=new Promise(resolve=>{releaseArm=resolve;});
+  const accepted=new Promise(resolve=>{armAccepted=resolve;});
+  await page.waitForFunction(()=>!busy);
+  await page.locator('#arm').click();await accepted;
+  await page.evaluate(()=>window.dispatchEvent(new Event('blur')));
+  try {
+    await page.waitForFunction(()=>JSON.parse(document.querySelector('#diagnostics').textContent).stopped,null,{timeout:1500});
+  } finally { releaseArm();armReplyGate=null; }
+  await page.waitForFunction(()=>!busy);
+  assert.equal((await state()).stopped,true);
   // Never persist the API token in browser storage.
   assert.deepEqual(await page.evaluate(()=>[localStorage.length,sessionStorage.length]),[0,0]);
   assert.equal(await page.locator('#token').inputValue(),'');
