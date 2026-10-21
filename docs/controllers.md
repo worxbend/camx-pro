@@ -40,6 +40,9 @@ are pinned because v2 is still a release candidate.
 
 Eight presets save the **explicit target fields** while released. Speed and
 acceleration apply to both axes while released and require a fresh reference.
+Firmware 1.1.0 adds runtime speed/acceleration/jerk scales, retargeting, preset
+names, saving the present pose and a last-pose hint to the API; these remotes do not
+use them yet, and the built-in firmware panel does ([API](../firmware/docs/api.md)).
 Advanced travel limits, motor-step calibration and commissioning remain in
 the device's built-in panel/API. The remote always displays actual device limits.
 

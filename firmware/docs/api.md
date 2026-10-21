@@ -3,6 +3,13 @@
 The ESP32 controls movement only. The Anker C200 sends video directly to the
 host over USB. This API replaces camx's servo pulse/calibration protocol.
 
+**Firmware 1.1.0 (`"api_minor":1`)** adds only optional fields and operations to
+API v1: jerk-limited motion, synchronized pan/tilt arrival, runtime speed
+scales, retargeting, named presets, saving the present pose, and a last-pose
+hint. Every request and response of 1.0.0 still means what it did; a client
+that ignores unknown response fields needs no change. `api_minor` is absent in
+1.0.0 firmware, so clients can feature-detect with `(state.api_minor ?? 0) >= 1`.
+
 ## HTTP and serial
 
 `GET /` serves the control panel. Both `GET /api/state` and
@@ -62,23 +69,74 @@ every second while owning an armed session; never auto-arm on reconnect.
 | `reference` | `pan`, `tilt` degrees | Released only; acknowledge actual physical angles, clear latch |
 | `arm` | none | Requires valid reference and cleared latch; energize phases |
 | `disarm` | none | Cancel motion, release coils, invalidate reference |
-| `move` | `pan`, `tilt` degrees | Absolute, both axes; idle armed only |
-| `relative` | `pan`, `tilt` degree offsets | Idle armed only; fractional sub-step requests accumulate |
-| `center` | none | Move to zero; never search for a sensor |
+| `move` | `pan`, `tilt` degrees; optional `speed`, `retarget` | Absolute, both axes arrive together; idle armed only unless `retarget` |
+| `relative` | `pan`, `tilt` degree offsets; optional `speed`, `retarget` | Fractional sub-step requests accumulate; offsets add to the newest target |
+| `center` | optional `speed`, `retarget` | Move to zero; never search for a sensor |
 | `jog` | `pan`, `tilt` normalized speeds | Each zero or magnitude 0.025–1; renew unchanged vector within 500 ms |
 | `heartbeat` | none | Renew the 5 s controller watchdog |
 | `stop` | none; optional epoch/seq ignored | Immediate latched software stop, retain torque |
+| `motion` | any of `speed`, `accel`, `jerk` (0.05–1) | Runtime multipliers for later moves; allowed any time, never stored |
 | `settings` | fields below | Released only; validate, invalidate reference and persist |
-| `preset_set` | `slot` 0–7, `pan`, `tilt` | Released only; save explicit coordinates |
-| `preset_move` | `slot` 0–7 | Recall an existing in-range preset |
+| `preset_set` | `slot` 0–7, `pan`, `tilt`; optional `name` | Released only; save explicit coordinates |
+| `preset_save` | `slot` 0–7; optional `name` | Save the present pose; referenced and at rest, armed or not |
+| `preset_clear` | `slot` 0–7 | Forget a preset; idempotent |
+| `preset_move` | `slot` 0–7; optional `speed`, `retarget` | Recall an existing in-range preset |
 
 `{"op":"jog","epoch":12346,"seq":4,"pan":0,"tilt":0}` requests smooth
 braking, including during a position move. Wait until `moving:false` before a
 new direction or target. Lease expiry also brakes; STOP interrupts immediately.
 
+## Motion profile
+
+Every move is a seven-phase **jerk-limited S-curve**: acceleration ramps up and
+down at no more than the configured jerk, instead of jumping, so the motors and
+the printed gears see no step changes in torque. Speed, acceleration and jerk
+ceilings are never exceeded, and a stop is planned from the exact present speed
+and acceleration with the same ceilings. The profile is evaluated analytically
+against a monotonic clock; nothing is queued or replayed.
+
+* **Synchronized arrival.** For `move`, `relative`, `center` and `preset_move`, the axis
+  with less to travel is stretched in time (speed, acceleration and jerk scale as
+  1/k, 1/k², 1/k³) so both arrive together and the camera follows a straight line in
+  pan/tilt. The 250 µs timer rebases the profile at every step, which lengthens a move
+  by 0.1–2.8 % depending on the step rate (measured with an ideal timer across speed
+  settings), so the two arrival times agree to within a few per cent, not exactly.
+  Jog axes stay independent. `eta` reports the seconds of planned motion left.
+* **Runtime scales.** `motion` sets multipliers in 0.05–1 on the configured speed,
+  acceleration and jerk. They apply to moves and jogs planned afterwards, can be changed
+  while armed, need no re-reference, and reset to 1 at boot. A move's own `speed`
+  (0.05–1) multiplies the runtime speed scale for that move only. Configured values
+  stay hard ceilings: scales can only lower them.
+* **Retargeting.** A move normally returns `busy` while another is in progress. With
+  `"retarget":true` both axes brake smoothly, `queued` becomes true, and the newest
+  target starts from wherever they come to rest. The last request wins, a relative
+  offset adds to the pending target, and repeating the target already being approached
+  changes nothing. STOP, `disarm` and a zero jog cancel the pending target; a jog
+  cannot be started or retargeted over (`busy`). Wait for `moving:false` or `eta` as
+  before when you do not send `retarget`.
+* **Jog release** now takes a little longer than a trapezoid did, because the stop ramps
+  its own acceleration down: about 0.5–0.7 s from full speed with the default jerk.
+
+## Presets and the last pose
+
+Eight presets hold a pan/tilt pair and an optional name of up to 16 printable ASCII
+characters. `preset_set` keeps its rule (released motors; explicit angles). A name
+that is left out keeps the slot's existing name; `""` clears it. `preset_save` stores
+the present estimate and needs a valid reference and a mechanism at rest; `preset_clear`
+empties a slot. Saving and clearing work while armed: the settings are marked dirty
+(`settings_dirty:true`) and the flash write happens at the next accepted command with the
+motors released, normally `disarm`. Power loss before that loses the change.
+
+`last_pose` holds where the mechanism rested the last time the motors were released
+with a valid reference (not after interrupted motion or a fault). It survives a reboot
+so a client can offer it as the starting point for the next manual reference. It is a
+hint only: boot and brownout still never restore a reference, and `reference` always
+takes explicit angles.
+
 Optional settings: `pan_steps`, `tilt_steps` (2000–6000 half-steps/geared motor
 turn); `pan_min`, `pan_max`, `tilt_min`, `tilt_max` (degrees); `pan_speed`,
 `tilt_speed` (degrees/s, at least 0.1); `pan_accel`, `tilt_accel` (0.1–20°/s²);
+`pan_jerk`, `tilt_jerk` (1–500°/s³, default 80, reduced settings at most 80);
 `pan_inverted`, `tilt_inverted`, `commissioned` (JSON booleans). Each range must
 include zero and span at least 1°. Fixed external ratios cannot be changed by
 API. Limits must remain within the CAD envelope; uncommissioned settings are
@@ -93,8 +151,12 @@ require a fresh physical reference. Flash writes are never made while armed.
 Responses include `result`, `epoch`, `seq`, `armed`, `referenced`, `stopped`,
 `moving`, `jogging`, `fault`, `commissioned`, `storage_ok`, `settings_dirty`,
 `max_tick_gap_us`, `timing_faults`, two `axes` and eight `presets`.
+Since 1.1.0 they also include `api_minor`, `queued`, `eta` (seconds), `motion`
+(`speed`, `accel`, `jerk` scales), `max_tick_cost_us` (longest time one 250 µs motor
+callback has spent in the controller, for bench qualification), `last_pose`
+(`valid`, `pan`, `tilt`) and, per preset, `name`.
 Each axis reports emitted `steps`, estimated `degrees`, requested `target`,
-planned `velocity` and calibration/settings. Position fields are trustworthy
+planned `velocity`, present `accel_now` (°/s²) and calibration/settings including `jerk`. Position fields are trustworthy
 only as an **open-loop estimate** when `referenced:true`; no slip is detectable.
 
 HTTP 200 means accepted, 400 means invalid/range failure, 401 means missing or
