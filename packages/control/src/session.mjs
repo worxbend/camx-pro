@@ -273,8 +273,17 @@ export class Session {
     }
     if (!this.jog) return;
     this.jog = null;
-    // A release cannot sit behind an ambiguous request and later renew motion.
-    if (this.busy) return this.stop();
+    if (this.busy) {
+      // Behind a lease renewal, poll or heartbeat the release waits for it and then brakes
+      // smoothly; nothing renews the lease meanwhile, and if that request fails the session
+      // sends STOP itself. Behind anything else a release cannot be ordered safely: STOP.
+      const behind = [undefined, null, 'jog', 'heartbeat'].includes(this.pendingOp);
+      if (!behind || this.waiting) return this.stop();
+      const generation = this.generation;
+      await this.inflight;
+      if (generation !== this.generation || !this.connected) return;
+      if (this.busy) return this.stop();
+    }
     return this.request('jog', { pan: 0, tilt: 0 });
   }
   async tick() {

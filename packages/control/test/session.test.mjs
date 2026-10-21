@@ -397,3 +397,58 @@ test('a command issued during a background poll is sent right after it; STOP can
   await assert.rejects(cancelled, /STOP/);
   assert(!sent.includes('center'));
 });
+
+test('releasing a jog during an in-flight renewal brakes after it; a failed renewal still stops', async () => {
+  let now = 0;
+  const demo = demoTransport(() => now);
+  const sent = [];
+  let hold = null;
+  let fail = false;
+  const session = new Session(
+    async (c) => {
+      sent.push(c ? `${c.op}${c.op === 'jog' ? `:${c.pan},${c.tilt}` : ''}` : 'poll');
+      if (c?.op === 'jog' && hold) {
+        await hold;
+        if (fail) throw Error('timeout');
+      }
+      return demo(c);
+    },
+    () => {},
+    () => now,
+  );
+  await session.request();
+  await session.request('reference', { pan: 0, tilt: 0 });
+  await session.request('arm');
+  await session.beginJog(0.5, 0);
+  let release;
+  hold = new Promise((r) => (release = r));
+  now = 200;
+  const renewal = session.tick(); // renews the lease; the reply is held
+  const ended = session.endJog(); // used to send STOP here and lose the reference
+  hold = null;
+  release();
+  await renewal;
+  await ended;
+  assert.deepEqual(sent.slice(-2), ['jog:0.5,0', 'jog:0,0']);
+  assert(!sent.includes('stop'));
+  assert(!session.state.stopped && session.state.referenced);
+  // The same release behind a renewal that fails: the session's failure path sends STOP.
+  now += 2000;
+  while (session.state.moving) {
+    now += 100;
+    await session.request();
+  }
+  await session.request('heartbeat');
+  await session.beginJog(0, 0.5);
+  hold = new Promise((r) => (release = r));
+  fail = true;
+  now += 200;
+  const failing = session.tick().catch(() => {});
+  const released = session.endJog();
+  hold = null;
+  release();
+  await failing;
+  await released;
+  assert.equal(sent.at(-1), 'stop');
+  assert(!sent.slice(-3).includes('jog:0,0'));
+});

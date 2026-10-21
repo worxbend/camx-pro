@@ -108,7 +108,10 @@ Use one active controller. Both clients serialize normal commands, consume the
 returned epoch/sequence even on rejection, and keep an explicit ownership flag.
 Only a session that armed the camera sends heartbeats (every second). Observers
 never keep another controller alive. Reconnection never automatically references
-or arms. No mutation is automatically retried after a timeout.
+or arms. No mutation is automatically retried after a timeout. In the web remote a jog
+press, a jog release or a command that meets a background poll, heartbeat or lease
+renewal waits for that request and is sent right after it (a release then brakes
+smoothly); STOP cancels the wait, and a release that cannot be ordered safely sends STOP.
 
 STOP uses a new local generation so late replies cannot restore an old armed
 state. Web blur, page hide, disconnect, and terminal exit request best-effort

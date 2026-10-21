@@ -11,7 +11,7 @@ Checked on 21 October 2026 after both remotes gained the firmware 1.1.0 features
 
 | Check | Result |
 | --- | --- |
-| Node tests | 18 passed: the earlier session/bridge cases plus capability detection, validation of 1.1.0 fields and of 1.0.0 states without them, the demo's synchronized diagonal moves, scales, retarget, named presets, last pose, and a jog pressed during an in-flight poll |
+| Node tests | 20 passed: the earlier session/bridge cases plus capability detection, validation of 1.1.0 fields and of 1.0.0 states without them, the demo's synchronized diagonal moves, scales, retarget, named presets, last pose, and a jog press, a command and a jog release meeting an in-flight poll or lease renewal (sent after it, not dropped or turned into STOP) |
 | Playwright | 7 passed, including a new scenario on the real C++ controller: runtime feel, a diagonal step (46/23 half-steps), a held diagonal jog, retargeting to a new target, a named preset of the present pose, clearing it, and the last-pose hint; the 320 px layout check stays green |
 | Remote on firmware 1.0.0 | Ad-hoc probe (not in CI): the remote served against the simulator built from commit `0b0a1c6` hid every 1.1.0 control; diagonal step and jog, a move and *Save* worked without errors |
 | Glyphora/Scala tests | 12 passed (was 6): parsing with and without 1.1.0 fields, the demo's 1.1.0 commands, a headless run of diagonal keys and buttons, *Save here* with a typed name, clear, feel and *Use last pose*, all new controls visible at 76×27, 1.0.0 firmware hiding features and never sending them, and a step pressed during a blocked status poll |
