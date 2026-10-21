@@ -119,6 +119,93 @@ test('Solid remote controls actual C++ firmware: reference, geared move, jog rel
   expect(commands.some((c) => c.op === 'jog' && c.pan === 0 && c.tilt === 0)).toBe(true);
 });
 
+test('Solid remote uses firmware 1.1 features on the C++ controller: diagonals, feel, retarget, named presets, last pose', async ({
+  page,
+  request,
+}) => {
+  await request.get('/test/reset');
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  const device = async () => JSON.parse(await page.locator('#diagnostics').textContent());
+  const commands = async () => (await request.get('/test/commands')).json();
+  const idle = () => expect.poll(async () => (await device()).moving).toBe(false);
+  await page.goto('/control/');
+  await page.getByLabel('API token').fill('test-token-123456789');
+  await page.getByRole('button', { name: 'Connect', exact: true }).click();
+  await expect(page.locator('.status-strip')).toContainText('Released');
+  await page.getByLabel('I physically aligned both axes.').check();
+  await page.locator('#reference').click();
+  await expect(page.locator('#arm')).toBeEnabled();
+  await page.locator('#arm').click();
+  await expect(page.locator('.status-strip')).toContainText('Armed');
+
+  // Motion feel: a runtime scale, applied while armed, keeps the reference.
+  await page.getByLabel('Speed %', { exact: true }).fill('50');
+  await page.locator('#apply-feel').click();
+  await expect.poll(async () => (await device()).motion.speed).toBe(0.5);
+  expect((await device()).referenced).toBe(true);
+  await page.getByLabel('Speed %', { exact: true }).fill('100');
+  await page.locator('#apply-feel').click();
+  await expect.poll(async () => (await device()).motion.speed).toBe(1);
+
+  // A diagonal step moves both axes in one synchronized relative move.
+  await page.getByRole('button', { name: 'Step up-right' }).click();
+  await expect.poll(async () => (await device()).axes.map((a) => a.steps)).toEqual([46, 23]);
+  expect((await commands()).some((c) => c.op === 'relative' && c.pan === 1 && c.tilt === 1)).toBe(
+    true,
+  );
+
+  // A held diagonal jogs both axes at once and stops smoothly on release.
+  const corner = page.getByRole('button', { name: 'Hold down-left' });
+  await corner.scrollIntoViewIfNeeded();
+  const box = await corner.boundingBox();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await expect.poll(async () => (await device()).jogging).toBe(true);
+  await page.waitForTimeout(700);
+  await page.mouse.up();
+  await idle();
+  const [panSteps, tiltSteps] = (await device()).axes.map((a) => a.steps);
+  expect(panSteps).toBeLessThan(46);
+  expect(tiltSteps).toBeLessThan(23);
+  expect((await commands()).some((c) => c.op === 'jog' && c.pan === -0.5 && c.tilt === -0.5)).toBe(
+    true,
+  );
+
+  // Retargeting: a new target while moving brakes, then goes to the newest one.
+  await page.getByLabel('Target pan °', { exact: true }).fill('8');
+  await page.getByLabel('Target tilt °', { exact: true }).fill('0');
+  await page.locator('#move').click();
+  await expect.poll(async () => (await device()).moving).toBe(true);
+  await expect(page.locator('#move')).toBeDisabled();
+  await page.getByLabel('Retarget while moving').check();
+  await expect(page.locator('#move')).toBeEnabled();
+  await page.getByLabel('Target pan °', { exact: true }).fill('-3');
+  await page.locator('#move').click();
+  await expect
+    .poll(async () => (await device()).axes.map((a) => a.steps), { timeout: 20000 })
+    .toEqual([Math.round((-3 * 4096 * 4) / 360), 0]);
+  expect((await commands()).some((c) => c.op === 'move' && c.pan === -3 && c.retarget)).toBe(true);
+  await page.getByLabel('Retarget while moving').uncheck();
+
+  // Named preset of the present pose, saved while armed, then cleared.
+  await page.getByLabel('Name for the next save').fill('Desk');
+  await page.getByRole('button', { name: 'Save current pose as position 2' }).click();
+  await expect.poll(async () => (await device()).presets[1].name).toBe('Desk');
+  await expect(page.locator('.preset-list')).toContainText('Desk');
+  await expect(page.locator('.preset-list')).toContainText('-3.0° / 0.0°');
+  await page.getByRole('button', { name: 'Clear position 2' }).click();
+  await expect.poll(async () => (await device()).presets[1].valid).toBe(false);
+
+  // Releasing at rest leaves a last-pose hint that can fill the reference angles.
+  await page.locator('#disarm').click();
+  await expect(page.locator('.status-strip')).toContainText('Released');
+  await page.locator('#use-last-pose').click();
+  const reference = Number(await page.getByLabel('Actual pan °').inputValue());
+  expect(Math.abs(reference + 3)).toBeLessThan(0.02);
+  expect(errors).toEqual([]);
+});
+
 test('remote demo is clearly labeled and blur stops an owned session', async ({ page }) => {
   await page.goto('/camx-pro/control/?demo=1');
   await expect(page.locator('.banner')).toContainText('No hardware');

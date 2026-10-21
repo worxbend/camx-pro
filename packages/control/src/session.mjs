@@ -1,7 +1,30 @@
 /** API v1 session. One in-flight normal request; STOP invalidates all late replies. */
+const finite = (n) => typeof n === 'number' && Number.isFinite(n);
+const uint = (n) => Number.isInteger(n) && n >= 0 && n <= 0xffffffff;
+
+/** Minor API revision: absent (0) for firmware 1.0.0, 1 for firmware 1.1.0. */
+export const apiMinor = (s) => (uint(s?.api_minor) ? s.api_minor : 0);
+
+/**
+ * What the connected firmware supports beyond the original API v1 commands. Firmware 1.1.0
+ * (api_minor 1) adds runtime motion scales, per-move speed, retargeting, named presets,
+ * saving the present pose, clearing presets, the last-pose hint and the jerk setting.
+ */
+export function capabilities(s) {
+  const v11 = apiMinor(s) >= 1;
+  return {
+    scales: v11,
+    moveSpeed: v11,
+    retarget: v11,
+    presetNames: v11,
+    saveHere: v11,
+    clearPreset: v11,
+    lastPose: v11,
+    jerk: v11,
+  };
+}
+
 export function validateState(s) {
-  const finite = (n) => typeof n === 'number' && Number.isFinite(n);
-  const uint = (n) => Number.isInteger(n) && n >= 0 && n <= 0xffffffff;
   if (
     !s ||
     s.api !== 1 ||
@@ -41,11 +64,34 @@ export function validateState(s) {
     ) ||
     !Array.isArray(s.presets) ||
     s.presets.length !== 8 ||
-    !s.presets.every((p) => typeof p.valid === 'boolean' && finite(p.pan) && finite(p.tilt))
+    !s.presets.every((p) => typeof p.valid === 'boolean' && finite(p.pan) && finite(p.tilt)) ||
+    ('api_minor' in s && !uint(s.api_minor)) ||
+    (apiMinor(s) >= 1 && !validMinorOne(s))
   ) {
     throw Error('Invalid or incompatible firmware state');
   }
   return s;
+}
+
+// Fields that firmware 1.1.0 always sends. Older firmware omits them; then nothing is checked.
+function validMinorOne(s) {
+  const scale = (n) => finite(n) && n >= 0.05 && n <= 1;
+  // Printable ASCII without '"' and '\\', as the firmware accepts them.
+  const name = (n) =>
+    typeof n === 'string' && n.length <= 16 && /^[\x20\x21\x23-\x5b\x5d-\x7e]*$/.test(n);
+  return (
+    typeof s.queued === 'boolean' &&
+    finite(s.eta) &&
+    s.eta >= 0 &&
+    !!s.motion &&
+    ['speed', 'accel', 'jerk'].every((k) => scale(s.motion[k])) &&
+    !!s.last_pose &&
+    typeof s.last_pose.valid === 'boolean' &&
+    finite(s.last_pose.pan) &&
+    finite(s.last_pose.tilt) &&
+    s.axes.every((a) => finite(a.jerk) && a.jerk > 0 && finite(a.accel_now)) &&
+    s.presets.every((p) => name(p.name))
+  );
 }
 
 export function httpTransport(token, { fetcher = fetch, timeout = 1800 } = {}) {
@@ -85,6 +131,7 @@ export class Session {
     this.lastHeartbeat = 0;
     this.lastPoll = 0;
     this.jog = null;
+    this.wanted = null; // a jog pressed while another request was in flight
     this.lastJog = 0;
     this.pendingOp = null;
   }
@@ -151,12 +198,18 @@ export class Session {
         this.pendingOp = null;
       }
       this.publish();
+      // A press that arrived during this request starts now, if it is still held.
+      const wanted = this.wanted;
+      this.wanted = null;
+      if (wanted && this.connected && generation === this.generation)
+        this.beginJog(wanted.pan, wanted.tilt).catch(() => {});
     }
   }
   async stop() {
     const generation = ++this.generation;
     this.abort?.abort();
     this.jog = null;
+    this.wanted = null;
     this.owned = false;
     this.busy = true;
     this.pendingOp = 'stop';
@@ -184,12 +237,21 @@ export class Session {
     }
   }
   async beginJog(pan, tilt) {
-    if (!this.owned || this.busy || this.state.moving || this.state.stopped) return;
+    if (!this.owned || this.jog || this.state.moving || this.state.stopped) return;
+    // A poll or heartbeat is in flight: start once it completes instead of dropping the press.
+    if (this.busy) {
+      this.wanted = { pan, tilt };
+      return;
+    }
     this.jog = { pan, tilt };
     this.lastJog = this.now();
     await this.request('jog', this.jog);
   }
   async endJog() {
+    if (this.wanted) {
+      this.wanted = null; // released before it could start
+      return;
+    }
     if (!this.jog) return;
     this.jog = null;
     // A release cannot sit behind an ambiguous request and later renew motion.
