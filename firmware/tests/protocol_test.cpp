@@ -1,4 +1,5 @@
 #include "camx/status.hpp"
+#include "test_random.hpp"
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
@@ -310,7 +311,7 @@ int main() {
             R"({"op":"settings","pan_jerk":40,"pan_speed":2,"epoch":%E,"seq":%S})",
             R"({"op":"jog","pan":0.5,"tilt":-1,"epoch":%E,"seq":%S})",
             R"({"op":"preset_clear","slot":2,"epoch":%E,"seq":%S})"};
-        std::mt19937 chaos(99);
+        TestRandom chaos(99);
         camx::Device d(1100);
         uint64_t now = 0;
         bring_up(d);

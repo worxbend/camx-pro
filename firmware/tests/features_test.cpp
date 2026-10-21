@@ -1,6 +1,7 @@
 // Controller features built on the jerk-limited profile: synchronized arrival, runtime
 // speed/acceleration/jerk scales, retargeting, jogging, and the ETA diagnostic.
 #include "camx/controller.hpp"
+#include "test_random.hpp"
 #include <algorithm>
 #include <cstdlib>
 #include <iostream>
@@ -24,7 +25,7 @@ struct Rig {
     Controller c;
     uint64_t now = 0, lastBeat = 0;
     bool jitter;
-    std::mt19937 rng;
+    TestRandom rng;
     double peakV[2] = {}, peakA[2] = {}, peakJ[2] = {};
     uint64_t lastStep[2] = {};
     uint64_t ticks = 0;
@@ -413,7 +414,7 @@ int main() {
     int events = 0, retargets = 0;
     for (unsigned trial = 0; trial < 120; ++trial) {
         Rig r(true, 100 + trial, trial % 2);
-        std::mt19937 pick(trial + 7);
+        TestRandom pick(trial + 7);
         auto uniform = [&](double lo, double hi) {
             return lo + (hi - lo) * std::generate_canonical<double, 32>(pick);
         };

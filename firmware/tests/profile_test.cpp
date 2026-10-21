@@ -1,6 +1,7 @@
 // Property tests for the jerk-limited profile: ceilings, continuity, closed forms, time
 // stretching, inverse lookups and stopping from arbitrary mid-move states.
 #include "camx/profile.hpp"
+#include "test_random.hpp"
 #include <cstdlib>
 #include <iostream>
 #include <random>
@@ -28,7 +29,7 @@ Sample at(const Profile &p, double t) {
 
 // Central differences must agree with the analytic velocity and acceleration, acceleration
 // and jerk must respect their ceilings, and the position must never go backwards.
-void audit(const Profile &p, const Limits &l, double aCeiling, double vCeiling, std::mt19937 &rng) {
+void audit(const Profile &p, const Limits &l, double aCeiling, double vCeiling, TestRandom &rng) {
     const double h = 1e-5, T = p.duration();
     double previous = 0;
     const int samples = 400;
@@ -57,7 +58,7 @@ void audit(const Profile &p, const Limits &l, double aCeiling, double vCeiling, 
 } // namespace
 
 int main() {
-    std::mt19937 rng(20261021);
+    TestRandom rng(20261021);
     auto uniform = [&](double lo, double hi) {
         return lo + (hi - lo) * std::generate_canonical<double, 32>(rng);
     };
