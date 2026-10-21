@@ -3,7 +3,28 @@
 Validated on 21 October 2026. These checks exercise software and exported CAD;
 no ESP32 was flashed and no motor or camera was moved.
 
-## Local evidence
+## Firmware 1.1 client update
+
+Checked on 21 October 2026 after both remotes gained the firmware 1.1.0 features
+(diagonal jog and steps, motion feel, move speed, retargeting, named presets with
+*Here* and clear, last-pose hint, jerk setting). No ESP32 was flashed and nothing moved.
+
+| Check | Result |
+| --- | --- |
+| Node tests | 18 passed: the earlier session/bridge cases plus capability detection, validation of 1.1.0 fields and of 1.0.0 states without them, the demo's synchronized diagonal moves, scales, retarget, named presets, last pose, and a jog pressed during an in-flight poll |
+| Playwright | 7 passed, including a new scenario on the real C++ controller: runtime feel, a diagonal step (46/23 half-steps), a held diagonal jog, retargeting to a new target, a named preset of the present pose, clearing it, and the last-pose hint; the 320 px layout check stays green |
+| Remote on firmware 1.0.0 | Ad-hoc probe (not in CI): the remote served against the simulator built from commit `0b0a1c6` hid every 1.1.0 control; diagonal step and jog, a move and *Save* worked without errors |
+| Glyphora/Scala tests | 12 passed (was 6): parsing with and without 1.1.0 fields, the demo's 1.1.0 commands, a headless run of diagonal keys and buttons, *Save here* with a typed name, clear, feel and *Use last pose*, all new controls visible at 76×27, 1.0.0 firmware hiding features and never sending them, and a step pressed during a blocked status poll |
+| Packaged Glyphora JAR | Assembly, demo JSON (`api_minor` 1) and the real-PTY render/Ctrl+C/terminal-restoration check passed |
+| Website | Build, 103-component model check, 30 local links/assets and 11 pinned CAD downloads, and the 3 asset-rejection tests passed |
+| Hygiene | Prettier and `git diff --check` passed; actionlint and the npm audit were not rerun |
+
+Environment notes: tests ran on Node 22 (CI uses Node 24); Playwright 1.55 was pointed at
+the preinstalled Chromium build; the TUI used JDK 25 with the JVM Mill launcher
+(`MILL_VERSION=1.1.9-jvm`) because the native launcher did not trust the local TLS proxy,
+and Maven Central rate limiting needed retries. GitHub Actions did not run for this change.
+
+## Local evidence: initial controllers
 
 | Check | Result |
 | --- | --- |
@@ -21,7 +42,7 @@ no ESP32 was flashed and no motor or camera was moved.
 Production browser builds use Solid 2.0.0-rc.16 and Vite 8.3.4. The TUI uses
 published Glyphora 0.20.0, Scala 3.9.0, Mill 1.1.9 and JDK 25. The CAD source
 fingerprint remains unchanged from the verified P3 export. `AGENTS.md` was not
-modified. Sources and lockfiles are committed; generated outputs and credentials
+modified at that time (the 1.1 update rewrote it to describe the established layout). Sources and lockfiles are committed; generated outputs and credentials
 remain ignored.
 
 ## Scope

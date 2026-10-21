@@ -8,6 +8,11 @@ frame, a **4:1 planetary pan actuator** and a **2:1 concealed tilt belt**.
 
 ![P3 CAD](hardware/docs/images/p3-three-quarter.png)
 
+Firmware 1.1.0 plans jerk-limited moves that bring pan and tilt to their targets
+together, so diagonals are straight. The web and terminal remotes and the firmware's
+own panel offer diagonal control, runtime motion feel, retargeting, named presets and
+a last-pose hint; both remotes still work with 1.0.0 firmware.
+
 **Engineering fit prototype.** Physical fits, loaded torque, cable behavior and
 PLA heat/creep remain qualification gates. Read the
 [P3 verification record](hardware/docs/p3-verification.md) before printing.
@@ -19,8 +24,8 @@ apps/                    User-facing applications
   site/                  Project website and Three.js CAD viewer
   remote/                Solid.js 2 web controller
   tui/                   Scala/Glyphora terminal controller
-packages/                Shared JavaScript libraries, each with src/ and test/
-  control/               API session ordering, HTTP transport and demo
+packages/                JavaScript libraries (npm workspaces), each with src/ and test/
+  control/               Web remote's API session, HTTP transport and demo simulator
   bridge/                Localhost host and ESP32 proxy
 firmware/                PlatformIO project: src/, include/, tests/, tools/, docs/
 hardware/                Mechanical project: cad/, tests/, tools/, docs/, references/
@@ -35,7 +40,7 @@ docs/                    Monorepo architecture, operator guide and publishing
 Each project owns its code, tests, configuration and generated output. Root files
 provide shared npm workspaces, formatting, CI and Make targets. See the
 [architecture guide](docs/architecture.md) for dependency boundaries and placement
-rules. `AGENTS.md` is preserved unchanged.
+rules. `AGENTS.md` summarizes the layout, commands and conventions for coding agents.
 
 ## Web remote and website
 

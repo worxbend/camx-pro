@@ -47,15 +47,40 @@ software, so planning and per-step time-search cost is **not** established by th
 | Test sensitivity | Mutants that halve the jerk bound, allow only one search round, or brake with doubled acceleration all fail the suites; removing the 1 µs rebase margin does not (it is a safety margin the simulation does not exhaust) |
 | Protocol | New operations and option validation; 60,000 mutated commands executed (not only parsed) with sanitizers and invariants on scales, names, poses, limits; worst-case status JSON (all presets named, extreme values) is well-formed at about 1.6 KB of the 4,096-byte buffer, and truncation is reported as failure |
 | Persistence | Version 2 round trip; every single-byte corruption; 19 resealed (valid-CRC) version 2 corruptions and 3 version 1 ones rejected without touching the device; version 1 blobs produced by a byte-for-byte copy of the 1.0.0 encoder migrate with their presets and calibration, then re-encode and reload identically |
-| ESP32 builds | Public build compiles with `-Werror`: RAM 60,156 bytes (18.4 %, was 57,348), flash 811,269 bytes (61.9 %, was 798,901, same toolchain); the Wi-Fi + GPIO32 STOP fixture compiles |
+| ESP32 builds | Public build compiles with `-Werror`: RAM 60,268 bytes (18.4 %, was 57,348), flash 812,785 bytes (62.0 %, was 798,901, same toolchain), after the review fixes and panel changes below; the Wi-Fi + GPIO32 STOP fixture compiles |
 | Browser | The firmware panel test (3 consecutive runs) covers motion scales, retargeting, named presets, saving the present pose, clearing, validation and the last-pose hint against the real C++ controller; the unchanged Solid remote passes its 6 integration tests against the 1.1.0 controller; 12 Node unit tests pass; `contracts/state-v1.json` was regenerated and is accepted by the JS session code and the integration fixture |
 
-Not checked: the Scala terminal application's tests (JDK 25 was unavailable; it reads only
-fields that did not change), the CAD Python suite, and anything on a board. The ESP32
-timing of the motor callback with the new planner, step timing with Wi-Fi traffic, flash
-write behavior and the physical effect of the gentler profiles remain bench items; read
-`max_tick_cost_us`, `max_tick_gap_us` and `timing_faults` during qualification. The 1.0.0
-binary hash and source fingerprint below belong to the 1.0.0 snapshot and were not recomputed.
+Not checked here: the CAD Python suite and anything on a board. The ESP32 timing of the
+motor callback with the new planner, step timing with Wi-Fi traffic, flash write behavior
+(including the new write at `arm`) and the physical effect of the gentler profiles remain
+bench items; read `max_tick_cost_us`, `max_tick_gap_us` and `timing_faults` during
+qualification. The 1.0.0 binary hash and source fingerprint below belong to the 1.0.0
+snapshot and were not recomputed. GitHub Actions did not run for these commits.
+
+### Independent review of 1.1.0 and fixes
+
+A separate read-only review of the 1.1.0 change found no defects in the profile
+mathematics or step emission and reported five behavioral findings. Each was reproduced
+here and fixed with a regression test:
+
+1. A synchronized (time-stretched) axis braked with its stretched ceilings; after a zero
+   jog during `move(20, 0.2)` tilt kept moving for 3.6 s. It now brakes with the move's
+   unstretched ceilings and stops in 0.06 s. Profile tests check that braking with higher
+   ceilings is never longer and never needs more room.
+2. `disarm` without an armed session erased the stored last pose, and a STOP at rest
+   discarded a trustworthy one. Only releasing an armed session replaces it now; a STOP at
+   rest keeps it.
+3. The last pose stayed valid in flash during an armed session, so a reset could leave a
+   stale hint. An accepted `arm` now erases it from flash first, with the coils off.
+4. Preset names could contain `"` or `\` through a crafted settings blob, producing
+   invalid JSON. Both characters are now rejected everywhere, including the clients.
+5. `eta` and each axis `target` ignored a queued retarget. They now include it; the ETA
+   matched the measured time within 8 % in the regression test.
+
+The panel's diagonal jog and the start of a jog pressed during a status poll are covered
+by its browser test, which passed three consecutive runs. After these changes all seven
+native suites pass with Clang 18, ASan and UBSan, and `contracts/state-v1.json` is
+unchanged.
 
 ## Independent review and corrections
 

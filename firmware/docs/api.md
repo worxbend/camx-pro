@@ -101,37 +101,47 @@ against a monotonic clock; nothing is queued or replayed.
   pan/tilt. The 250 µs timer rebases the profile at every step, which lengthens a move
   by 0.1–2.8 % depending on the step rate (measured with an ideal timer across speed
   settings), so the two arrival times agree to within a few per cent, not exactly.
-  Jog axes stay independent. `eta` reports the seconds of planned motion left.
+  Jog axes stay independent. `eta` reports the seconds of planned motion left, including
+  a queued retarget's estimated move.
 * **Runtime scales.** `motion` sets multipliers in 0.05–1 on the configured speed,
   acceleration and jerk. They apply to moves and jogs planned afterwards, can be changed
   while armed, need no re-reference, and reset to 1 at boot. A move's own `speed`
   (0.05–1) multiplies the runtime speed scale for that move only. Configured values
   stay hard ceilings: scales can only lower them.
 * **Retargeting.** A move normally returns `busy` while another is in progress. With
-  `"retarget":true` both axes brake smoothly, `queued` becomes true, and the newest
-  target starts from wherever they come to rest. The last request wins, a relative
-  offset adds to the pending target, and repeating the target already being approached
-  changes nothing. STOP, `disarm` and a zero jog cancel the pending target; a jog
-  cannot be started or retargeted over (`busy`). Wait for `moving:false` or `eta` as
-  before when you do not send `retarget`.
+  `"retarget":true` both axes brake smoothly, `queued` becomes true, each axis `target`
+  shows the queued destination, and the newest target starts from wherever the axes
+  come to rest. The last request wins, a relative offset adds to the pending target,
+  and repeating the target already being approached changes nothing. STOP, `disarm`
+  and a zero jog cancel the pending target; a jog cannot be started or retargeted over
+  (`busy`). Wait for `moving:false` or `eta` as before when you do not send `retarget`.
+* **Braking** (zero jog, lease expiry, retarget) plans each axis's stop with the move's
+  ceilings before the synchronization stretch, so the axis that was slowed down stops as
+  promptly as the leading one. The axes stop independently; during a brake the path is
+  no longer exactly straight.
 * **Jog release** now takes a little longer than a trapezoid did, because the stop ramps
   its own acceleration down: about 0.5–0.7 s from full speed with the default jerk.
 
 ## Presets and the last pose
 
 Eight presets hold a pan/tilt pair and an optional name of up to 16 printable ASCII
-characters. `preset_set` keeps its rule (released motors; explicit angles). A name
+characters other than `"` and `\` (so names never need escaping in JSON).
+`preset_set` keeps its rule (released motors; explicit angles). A name
 that is left out keeps the slot's existing name; `""` clears it. `preset_save` stores
 the present estimate and needs a valid reference and a mechanism at rest; `preset_clear`
 empties a slot. Saving and clearing work while armed: the settings are marked dirty
 (`settings_dirty:true`) and the flash write happens at the next accepted command with the
 motors released, normally `disarm`. Power loss before that loses the change.
 
-`last_pose` holds where the mechanism rested the last time the motors were released
-with a valid reference (not after interrupted motion or a fault). It survives a reboot
-so a client can offer it as the starting point for the next manual reference. It is a
-hint only: boot and brownout still never restore a reference, and `reference` always
-takes explicit angles.
+`last_pose` holds where the mechanism rested when an **armed** session was last
+released (`disarm`) with a valid reference and no motion in progress. A STOP at rest
+keeps the pose (holding torque kept the position); a release after interrupted motion
+or a timing fault records "no pose". Releasing motors that were not armed leaves the
+stored hint alone, so it survives a reboot and an early safety release. An accepted
+`arm` first erases the hint from flash, while the coils are still off: after a reset
+during the session the mechanism could be anywhere, so no stale hint can survive one.
+It is a hint only: boot and brownout still never restore a reference, and `reference`
+always takes explicit angles.
 
 Optional settings: `pan_steps`, `tilt_steps` (2000–6000 half-steps/geared motor
 turn); `pan_min`, `pan_max`, `tilt_min`, `tilt_max` (degrees); `pan_speed`,

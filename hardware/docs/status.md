@@ -26,8 +26,9 @@ dense gear/tilt sweeps, cable checks and 69 whole-assembly poses.
 - Solid, mesh, parameter, interface, motion, cable, layer, slicing and archive
   checks. Package creation refuses missing, failed or stale prerequisite reports.
 - ESP32-WROOM stepper firmware for the 4:1 pan and 2:1 tilt reductions, a browser
-  remote, authenticated HTTP/serial commands, presets, calibration, manual
-  reference, motion leases and latched faults. See the [firmware guide](../../firmware/README.md)
+  remote, authenticated HTTP/serial commands, jerk-limited synchronized pan/tilt
+  motion, named presets, calibration, manual reference, motion leases and latched
+  faults. See the [firmware guide](../../firmware/README.md)
   and [software verification](../../firmware/docs/verification.md).
 
 ## Remaining physical qualification

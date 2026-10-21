@@ -136,7 +136,10 @@ position. There is no automatic hold-current reduction on ULN2003.
 - `include/camx/`: portable C++17 motion, protocol, bounded HTTP parser, settings
   codec and status serialization; `src/main.cpp`: ESP32 GPIO/network/NVS adapter.
 - `web/index.html`: served from firmware; no filesystem upload or internet/CDN
-  dependency. `tests/`: host tests and browser fixture. `.clang-format`: C++ style.
+  dependency. It offers eight-direction jog (diagonals drive both axes), motion
+  feel, retargeting, named presets and the last-pose hint; a jog pressed while a
+  status poll is in flight starts when the poll returns. `tests/`: host tests and
+  browser fixture. `.clang-format`: C++ style.
 - Moves are jerk-limited S-curves (`include/camx/profile.hpp`): speed, acceleration
   and jerk never exceed the configured values, and every stop (jog release, lease
   expiry, retarget) is planned from the exact present speed and acceleration. Pan
@@ -145,8 +148,11 @@ position. There is no automatic hold-current reduction on ULN2003.
   its own `speed`, and `"retarget":true` brakes and then goes to the newest target
   instead of answering `busy`. Without `retarget`, a new position move, or a jog in
   a new direction, still returns `busy` during motion; release a jog and wait before
-  reversing. Unlike camx's Ruckig planner this one handles rest-to-rest moves and
-  stops only; it does not blend a new target into a running move without braking.
+  reversing. A stop uses the move's ceilings from before the synchronization
+  stretch, so the slowed-down axis stops as promptly as the leading one (the two then
+  stop independently). Unlike camx's Ruckig planner this one handles rest-to-rest
+  moves and stops only; it does not blend a new target into a running move without
+  braking.
 - A 250 µs `ESP_TIMER_TASK` callback advances the motor state under a short
   mutex. Parsing, networking, NVS and serialization happen outside that callback.
   It emits at most one half-step per axis per callback, keeps step intervals
@@ -176,8 +182,13 @@ position. There is no automatic hold-current reduction on ULN2003.
   happens when the motors are released. A changed mechanical fingerprint or corrupt
   blob falls back to reduced defaults. Storage failures are reported; RAM settings
   may remain active until reboot.
-- The last resting pose is a hint for the next manual reference. It is offered by
-  the panel (*Use as reference*) and never applied automatically.
+- The last resting pose is a hint for the next manual reference, offered by the
+  panel (*Use as reference*) and the remotes, never applied automatically. Only the
+  release of an armed session replaces it (a STOP at rest keeps it valid; interrupted
+  motion or a timing fault records none). An accepted `arm` erases it from flash
+  first, with the coils still off, so a reset during a session cannot leave a stale
+  hint; the write adds a flash write's latency to `arm`, and a failed write is
+  reported through `storage_ok` without blocking the arm.
 
 There are no installed home sensors or encoders. `reference` is an operator
 acknowledgment; `center` moves to zero. Automatic sensor search is deliberately
