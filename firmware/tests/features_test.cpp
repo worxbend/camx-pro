@@ -440,7 +440,8 @@ int main() {
                                   std::min(limits.axis[1].maximum, 20.0));
                 const bool queued = r.c.state().moving;
                 CHECK(r.c.move(goal[0], goal[1], false, r.now, speed, true) == Error::Ok);
-                retargets += queued;
+                if (queued)
+                    ++retargets;
                 braked = false;
             }
             ++events;

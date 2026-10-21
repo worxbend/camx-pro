@@ -11,10 +11,20 @@ import java.util.concurrent.{CountDownLatch, TimeUnit}
 import scala.concurrent.duration.DurationInt
 
 final class ControllerSpec extends AnyFunSuite:
-  test("parse the actual C++ API fixture and reject incompatible versions"):
+  private val fixturePath = "contracts/state-v1.json"
+  /** The firmware-generated state fixture, found from any working directory inside the repo. */
+  private def fixture(): ujson.Value =
     val root = Iterator.iterate(Path.of("").toAbsolutePath)(_.getParent).takeWhile(_ != null)
-      .find(p => Files.exists(p.resolve("contracts/state-v1.json"))).get
-    val value = ujson.read(Files.readString(root.resolve("contracts/state-v1.json")))
+      .find(p => Files.exists(p.resolve(fixturePath))).get
+    ujson.read(Files.readString(root.resolve(fixturePath)))
+  /** Clicks the first on-screen occurrence of a button label once it is rendered. */
+  private def clickLabel(pilot: Pilot, label: String): Unit =
+    pilot.waitUntil(s"$label button")(pilot.screenText.contains(label))
+    val row = pilot.screenLines.indexWhere(_.contains(label))
+    pilot.click(pilot.screenLines(row).indexOf(label) + 2, row)
+
+  test("parse the actual C++ API fixture and reject incompatible versions"):
+    val value = fixture()
     val state = State.parse(value)
     assert(state.axes.map(_.reduction) == Vector(4, 2))
     value("api") = 2
@@ -120,9 +130,7 @@ final class ControllerSpec extends AnyFunSuite:
     copy
 
   test("parse firmware 1.1 fields when present; 1.0 states parse with the new features off"):
-    val root = Iterator.iterate(Path.of("").toAbsolutePath)(_.getParent).takeWhile(_ != null)
-      .find(p => Files.exists(p.resolve("contracts/state-v1.json"))).get
-    val value = ujson.read(Files.readString(root.resolve("contracts/state-v1.json")))
+    val value = fixture()
     val state = State.parse(value)
     assert(state.apiMinor == 1 && state.extended)
     assert(state.scales.contains(Scales(1, 1, 1)))
@@ -222,10 +230,7 @@ final class ControllerSpec extends AnyFunSuite:
     val backend = HeadlessBackend(Size(120, 34))
     Pilot.using(backend)(app.runWith(backend)) { pilot =>
       pilot.waitUntil("connected")(app.snapshot.peek.nonEmpty)
-      def click(label: String): Unit =
-        pilot.waitUntil(s"$label button")(pilot.screenText.contains(label))
-        val row = pilot.screenLines.indexWhere(_.contains(label))
-        pilot.click(pilot.screenLines(row).indexOf(label) + 2, row)
+      def click(label: String): Unit = clickLabel(pilot, label)
       click("Reference...")
       pilot.press("ctrl+r")
       pilot.waitUntil("referenced")(app.snapshot.peek.exists(_.referenced))
@@ -264,10 +269,7 @@ final class ControllerSpec extends AnyFunSuite:
       pilot.waitUntil("connected")(app.snapshot.peek.exists(!_.extended))
       pilot.waitUntil("notice")(pilot.screenText.contains("need firmware 1.1.0"))
       assert(!pilot.screenText.contains("Apply feel") && !pilot.screenText.contains("Retarget while moving"))
-      def click(label: String): Unit =
-        pilot.waitUntil(s"$label button")(pilot.screenText.contains(label))
-        val row = pilot.screenLines.indexWhere(_.contains(label))
-        pilot.click(pilot.screenLines(row).indexOf(label) + 2, row)
+      def click(label: String): Unit = clickLabel(pilot, label)
       click("Save here")
       pilot.waitUntil("refused locally")(app.message.peek.contains("needs firmware 1.1.0"))
       click("Clear")

@@ -25,7 +25,8 @@ std::vector<uint8_t> encodeLegacy(const camx::Device &device) {
         for (unsigned i = 0; i < 8; ++i)
             blob[at++] = static_cast<uint8_t>(bits >> (8 * i));
     };
-    for (auto a : device.controller.config().axis) {
+    const auto config = device.controller.config();
+    for (const auto &a : config.axis) {
         real(a.motorSteps);
         real(a.minimum);
         real(a.maximum);
@@ -34,7 +35,7 @@ std::vector<uint8_t> encodeLegacy(const camx::Device &device) {
         blob[at++] = a.inverted;
     }
     blob[at++] = device.controller.config().commissioned;
-    for (auto p : device.presets) {
+    for (const auto &p : device.presets) {
         real(p.pan);
         real(p.tilt);
         blob[at++] = p.valid;

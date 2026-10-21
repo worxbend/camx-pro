@@ -11,9 +11,10 @@ class TestRandom {
     static constexpr result_type min() { return 0; }
     static constexpr result_type max() { return std::numeric_limits<result_type>::max(); }
     result_type operator()() {
-        uint64_t z = state_ += 0x9e3779b97f4a7c15ull;
-        z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9ull;
-        z = (z ^ (z >> 27)) * 0x94d049bb133111ebull;
+        state_ += 0x9E3779B97F4A7C15ULL;
+        uint64_t z = state_;
+        z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9ULL;
+        z = (z ^ (z >> 27)) * 0x94D049BB133111EBULL;
         return static_cast<result_type>((z ^ (z >> 31)) >> 32);
     }
 

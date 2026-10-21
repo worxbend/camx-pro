@@ -162,7 +162,8 @@ int main() {
             CHECK(firm.distance() <= stop.distance() + 1e-6 * (1 + d));
             CHECK(firm.duration() <= stop.duration() + 1e-9);
             ++stops;
-            jerkPhase += state.a != 0;
+            if (state.a != 0)
+                ++jerkPhase;
         }
     }
     CHECK(stops == 120000 && jerkPhase > 40000);

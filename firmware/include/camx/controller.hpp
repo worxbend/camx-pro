@@ -56,7 +56,9 @@ class Controller {
     }
     // Commanded destination of an axis in degrees: the queued target while one waits.
     double target(unsigned i) const {
-        return queued_.active ? (i == 0 ? queued_.pan : queued_.tilt) : axes_[i].requested;
+        if (!queued_.active)
+            return axes_[i].requested;
+        return i == 0 ? queued_.pan : queued_.tilt;
     }
     const Axis &axis(unsigned i) const { return axes_[i]; }
     // Estimated angle of an axis, always inside its configured travel.

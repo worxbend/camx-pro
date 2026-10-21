@@ -285,9 +285,12 @@ int main() {
         bool quoted = false;
         for (char c : json) {
             CHECK(static_cast<unsigned char>(c) >= 0x20);
-            quoted ^= c == '"';
-            if (!quoted)
-                braces += (c == '{') - (c == '}'), brackets += (c == '[') - (c == ']');
+            if (c == '"')
+                quoted = !quoted;
+            else if (!quoted && (c == '{' || c == '}'))
+                braces += c == '{' ? 1 : -1;
+            else if (!quoted && (c == '[' || c == ']'))
+                brackets += c == '[' ? 1 : -1;
             CHECK(braces >= 0 && brackets >= 0);
         }
         CHECK(!quoted && braces == 0 && brackets == 0);
