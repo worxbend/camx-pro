@@ -51,19 +51,36 @@ try {
     throw Error('Command was never sent: '+id);
   }
   const click=(id,result)=>press(id,result+': ok');
+  // Holds a jog button. The page ignores a press while a poll is in flight, so retry until the
+  // controller reports jogging, then hold for `ms` and release.
+  async function hold(locator,ms){
+    await locator.scrollIntoViewIfNeeded();
+    const box=await locator.boundingBox();
+    await page.mouse.move(box.x+box.width/2,box.y+box.height/2);
+    for(let attempt=0;attempt<20;attempt++){
+      await page.mouse.down();
+      const started=await page.waitForFunction(()=>JSON.parse(document.querySelector('#diagnostics').textContent).jogging,null,{timeout:1500}).then(()=>true,()=>false);
+      if(started){await page.waitForTimeout(ms);await page.mouse.up();return;}
+      await page.mouse.up();await page.waitForTimeout(150);
+    }
+    throw Error('Jog never started');
+  }
   await click('reference','reference');await click('arm','arm');
   assert.equal((await state()).armed,true);
   await page.locator('#pan').fill('1');await page.locator('#tilt').fill('-1');
   await click('move','move');
   await page.waitForFunction(()=>{const s=JSON.parse(document.querySelector('#diagnostics').textContent);return !s.moving&&s.axes[0].steps===46&&s.axes[1].steps===-23;});
   // Pointer capture/release yields a bounded jog and controlled deceleration.
-  const jog=page.locator('.jog[data-pan="1"]');
-  await jog.scrollIntoViewIfNeeded();const bounds=await jog.boundingBox();
-  await page.mouse.move(bounds.x+bounds.width/2,bounds.y+bounds.height/2);await page.mouse.down();
-  await page.waitForFunction(()=>JSON.parse(document.querySelector('#diagnostics').textContent).jogging);
-  await page.mouse.up();
+  await hold(page.locator('.jog[data-pan="1"][data-tilt="0"]'),0);
   await page.waitForFunction(()=>{const s=JSON.parse(document.querySelector('#diagnostics').textContent);return !s.moving&&!s.jogging;});
   assert.equal(commands.some(c=>c.op==='jog'&&c.pan===0&&c.tilt===0),true);
+  // A diagonal jog drives both axes at once.
+  const before=(await state()).axes.map(a=>a.steps);
+  await hold(page.locator('.jog[data-pan="-1"][data-tilt="-1"]'),500);
+  await page.waitForFunction(()=>{const s=JSON.parse(document.querySelector('#diagnostics').textContent);return !s.moving&&!s.jogging;});
+  const after=(await state()).axes.map(a=>a.steps);
+  assert.ok(after[0]<before[0]&&after[1]<before[1],`diagonal jog moved ${before} to ${after}`);
+  assert.equal(commands.some(c=>c.op==='jog'&&c.pan===-1&&c.tilt===-1),true);
   // STOP cancels a request whose actuation succeeded but whose response is delayed.
   delayMove=true;
   await page.locator('#pan').fill('10');await page.locator('#move').click();
