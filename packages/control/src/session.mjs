@@ -138,8 +138,24 @@ export class Session {
   publish() {
     this.onChange(this);
   }
-  async request(op, fields = {}) {
+  // A user command that meets a background poll or heartbeat waits for it instead of being
+  // refused; a user command or STOP in flight still refuses it, and STOP cancels the wait.
+  async afterBackground(op) {
+    const background = !this.pendingOp || this.pendingOp === 'heartbeat'; // a poll has no op
+    if (!op || op === 'heartbeat' || !background || this.waiting)
+      throw Error('Wait for the pending request');
+    const generation = this.generation;
+    this.waiting = true;
+    try {
+      await this.inflight;
+    } finally {
+      this.waiting = false;
+    }
+    if (generation !== this.generation) throw Error('Cancelled by STOP');
     if (this.busy) throw Error('Wait for the pending request');
+  }
+  async request(op, fields = {}) {
+    if (this.busy) await this.afterBackground(op);
     if (op && (!this.connected || !this.state)) throw Error('Connect and read state first');
     if (['move', 'relative', 'center', 'preset_move', 'jog'].includes(op) && !this.owned)
       throw Error('Arm this controller session before movement');
@@ -150,6 +166,8 @@ export class Session {
     this.abort = abort;
     this.busy = true;
     this.pendingOp = op;
+    let settle;
+    this.inflight = new Promise((resolve) => (settle = resolve));
     this.publish();
     try {
       const command = op
@@ -197,6 +215,7 @@ export class Session {
         this.busy = false;
         this.pendingOp = null;
       }
+      settle();
       this.publish();
       // A press that arrived during this request starts now, if it is still held.
       const wanted = this.wanted;

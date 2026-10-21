@@ -356,3 +356,44 @@ test('a jog pressed during an in-flight poll starts when the poll returns; an ea
   assert.equal(session.jog, null);
   assert(!session.state.jogging);
 });
+
+test('a command issued during a background poll is sent right after it; STOP cancels it', async () => {
+  let now = 0;
+  const demo = demoTransport(() => now);
+  const sent = [];
+  let hold = null;
+  const session = new Session(
+    async (c) => {
+      sent.push(c?.op ?? 'poll');
+      if (!c && hold) await hold;
+      return demo(c);
+    },
+    () => {},
+    () => now,
+  );
+  await session.request();
+  await session.request('reference', { pan: 0, tilt: 0 });
+  await session.request('arm');
+  let release;
+  hold = new Promise((r) => (release = r));
+  const poll = session.request();
+  const move = session.request('move', { pan: 2, tilt: 0 }); // used to throw "Wait for..."
+  await assert.rejects(session.request('relative', { pan: 1, tilt: 0 }), /pending/); // one waits
+  hold = null;
+  release();
+  await poll;
+  const moved = await move;
+  assert.equal(moved.result, 'ok');
+  assert.deepEqual(sent.slice(-2), ['poll', 'move']);
+  assert.equal(sent.at(-2) === 'poll' && moved.seq, session.state.seq);
+  // A user command in flight still refuses another one.
+  hold = new Promise((r) => (release = r));
+  const second = session.request();
+  const cancelled = session.request('center');
+  await session.stop();
+  hold = null;
+  release();
+  await second;
+  await assert.rejects(cancelled, /STOP/);
+  assert(!sent.includes('center'));
+});

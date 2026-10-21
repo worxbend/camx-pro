@@ -65,7 +65,11 @@ function App() {
   const state = () => snapshot().state;
   // Before connecting, offer only what every firmware supports.
   const caps = () => capabilities(snapshot().connected ? state() : null);
-  const busy = () => snapshot().busy || !snapshot().connected;
+  // Background polls and heartbeats do not block the controls: a command issued during one
+  // is sent as soon as it returns.
+  const busy = () =>
+    (snapshot().busy && !!snapshot().pendingOp && snapshot().pendingOp !== 'heartbeat') ||
+    !snapshot().connected;
   const ready = () =>
     !busy() && snapshot().owned && state().armed && state().referenced && !state().stopped;
   const canMove = () => ready() && !state().moving;
@@ -77,6 +81,7 @@ function App() {
       state: current.state || initialState(),
       connected: current.connected,
       busy: current.busy,
+      pendingOp: current.pendingOp,
       owned: current.owned,
       error: current.error,
     });
