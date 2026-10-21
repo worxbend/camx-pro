@@ -362,6 +362,33 @@ code {
   font-size: 11px;
   min-height: 38px;
 }
+.preset-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: end;
+  gap: 6px;
+}
+.preset .preset-actions {
+  flex: none;
+}
+.last-pose {
+  border-left: 3px solid #9cab9e;
+  padding-left: 12px;
+  margin-bottom: 15px;
+}
+.last-pose button {
+  font-size: 12px;
+}
+.move-options {
+  align-items: center;
+  flex-wrap: wrap;
+}
+.move-options .check {
+  margin-bottom: 15px;
+}
+.jog-note label {
+  max-width: 130px;
+}
 .settings {
   margin-top: 18px;
   display: grid;
@@ -371,6 +398,9 @@ code {
 }
 .settings h2 {
   margin-bottom: 7px;
+}
+.settings .fields {
+  flex-wrap: wrap;
 }
 details {
   padding: 25px 0;

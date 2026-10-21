@@ -32,9 +32,11 @@ gearbox must not be counted twice. Both motors need independent calibration,
 current/temperature tests and load tests. The build checks generated constants
 against CAD; a changed mechanical fingerprint invalidates old stored settings.
 
-Independent rest-to-rest trapezoids replace the old servo/Ruckig planner.
-Retargeting while moving returns `busy`; axes need not arrive together and
-jerk is not bounded. The scheduler does not replay overdue steps.
+Firmware 1.0.0 used independent rest-to-rest trapezoids in place of the old
+servo/Ruckig planner. Firmware 1.1.0 replaces them with jerk-limited S-curves,
+synchronized pan/tilt arrival and opt-in retargeting (`"retarget":true`; without
+it a move during motion is still `busy`); see the [firmware API](../../firmware/docs/api.md).
+The scheduler does not replay overdue steps.
 
 Implemented states:
 `unreferenced → referenced_disarmed → armed → moving`, with a latched

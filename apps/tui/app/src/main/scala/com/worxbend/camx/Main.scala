@@ -9,7 +9,9 @@ Usage: ./mill app.run --demo [--json]
 
 Live mode prompts for the API token, or reads CAMX_API_TOKEN from the environment.
 --json reads state once without arming or moving. No automatic reconnect/arm.
-Alt+arrows: bounded steps. Esc: STOP. q: quit (best-effort STOP if owned).
+Alt+arrows: bounded steps; Alt+y/u/b/n: diagonal steps. Esc: STOP.
+q: quit (best-effort STOP if owned). Firmware 1.1.0 adds motion feel, retargeting,
+named presets and the last-pose hint; with 1.0.0 they are hidden.
 Reference: enter actual pan/tilt, choose Reference, physically align, Ctrl+r.
 The demo is synthetic and never connects to hardware.
 """

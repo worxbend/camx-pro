@@ -1,5 +1,6 @@
 #pragma once
 #include "mechanics.hpp"
+#include "profile.hpp"
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
@@ -8,12 +9,16 @@ namespace camx {
 // Bits correspond directly to ULN2003 IN1, IN2, IN3, IN4. No PWM/STEP-DIR.
 inline constexpr uint8_t halfSteps[] = {1, 3, 2, 6, 4, 12, 8, 9};
 
+// Default jerk is ten times the acceleration: the acceleration ramps in 0.1 s.
+inline constexpr double jerkPerAcceleration = 10;
+
 struct AxisConfig {
     double motorSteps = 4096; // geared motor output, internal reduction already included
     double reduction = 4;
     double minimum = -20, maximum = 20;
     double speed = 4, acceleration = 8;
     bool inverted = false;
+    double jerk = jerkPerAcceleration * mechanics::acceleration; // degrees/s^3
     double stepsPerDegree() const { return motorSteps * reduction / 360.0; }
     int32_t lowStep() const { return static_cast<int32_t>(std::ceil(minimum * stepsPerDegree())); }
     int32_t highStep() const {
@@ -25,7 +30,16 @@ struct AxisConfig {
     }
 };
 
-// Rest-to-rest trapezoids, evaluated analytically using a monotonic 64-bit clock.
+// Runtime multipliers that only ever lower the configured ceilings.
+struct Scales {
+    double speed = 1, accel = 1, jerk = 1;
+};
+inline constexpr double minScale = 0.05;
+inline bool validScale(double value) {
+    return std::isfinite(value) && value >= minScale && value <= 1;
+}
+
+// Jerk-limited S-curves, evaluated analytically against a monotonic 64-bit clock.
 // There is no queue of old steps to replay after a scheduling stall.
 class Axis {
   public:
@@ -40,127 +54,140 @@ class Axis {
         requested = degrees;
         moving = false;
         position_ = steps;
-        velocity_ = 0;
+        velocity_ = acceleration_ = 0;
+        profile_.clear();
     }
-    void begin(double degrees, uint64_t now, double speedScale = 1) {
+    // Plans a rest-to-rest move on an idle axis and returns its duration in seconds, or a
+    // negative number when the move cannot be planned. `stretch` >= 1 makes the same move
+    // take `stretch` times longer without exceeding any ceiling. commit() starts it.
+    double prepare(double degrees, const Scales &scales, double stretch = 1) {
+        if (moving || !(stretch >= 1) || !std::isfinite(stretch))
+            return -1;
+        target_ = config.quantize(degrees);
+        direction_ = target_ < steps ? -1 : 1;
+        stopLimits_ = ceilings(scales);
+        limits_ = stopLimits_.stretched(stretch);
+        if (!profile_.planRestToRest(std::abs(static_cast<double>(target_ - steps)), limits_))
+            return -1;
+        return profile_.duration();
+    }
+    void commit(double degrees, uint64_t now) {
         requested = degrees;
-        beginSteps(config.quantize(degrees), now, speedScale);
+        start_ = position_ = steps;
+        velocity_ = acceleration_ = 0;
+        began_ = now;
+        elapsed_ = 0;
+        braking_ = false;
+        moving = target_ != steps;
     }
     void cancel() {
         moving = false;
-        velocity_ = 0;
+        velocity_ = acceleration_ = 0;
         position_ = steps;
         requested = steps / config.stepsPerDegree();
+        profile_.clear();
     }
+    // Smooth stop from the exact present speed and acceleration. It uses the move's ceilings
+    // before any synchronization stretch: still within the configured (and scaled) values,
+    // never needing more room than the move had left, and as prompt as on the leading axis,
+    // instead of letting a stretched axis creep on for seconds.
     void brake(uint64_t now) {
         if (!moving || braking_)
             return;
-        start_ = position_;
-        direction_ = velocity_ < 0 ? -1 : 1;
-        peak_ = std::abs(velocity_);
-        acceleration_ = config.acceleration * config.stepsPerDegree();
-        ramp_ = peak_ / acceleration_;
-        duration_ = ramp_;
-        distance_ = peak_ * ramp_ / 2;
-        target_ = std::clamp(static_cast<int32_t>(std::lround(start_ + direction_ * distance_)),
-                             config.lowStep(), config.highStep());
-        requested = target_ / config.stepsPerDegree();
+        sample(elapsed(now));
+        const double from = position_;
+        if (!profile_.planStop(std::abs(velocity_), direction_ * acceleration_, stopLimits_)) {
+            cancel();
+            return;
+        }
+        start_ = from;
         began_ = now;
+        elapsed_ = 0;
         braking_ = true;
+        target_ =
+            std::clamp(static_cast<int32_t>(std::lround(start_ + direction_ * profile_.distance())),
+                       config.lowStep(), config.highStep());
+        requested = target_ / config.stepsPerDegree();
     }
     // False indicates a missed scheduling deadline, not a successful catch-up.
     bool tick(uint64_t now) {
         if (!moving)
             return true;
-        double t = static_cast<double>(now - began_) / 1000000.0;
+        double t = elapsed(now);
         sample(t);
+        elapsed_ = t;
         const int32_t desired = std::clamp(static_cast<int32_t>(std::lround(position_)),
                                            config.lowStep(), config.highStep());
         const int32_t delta = desired - steps;
         if (std::abs(delta) > 1)
             return false;
         if (delta != 0) {
+            if (delta * direction_ < 0)
+                return false; // the profile only ever advances in one direction
             if (lastStep_ != 0 && now - lastStep_ < static_cast<uint64_t>(std::ceil(
                                                         1000000.0 / mechanics::maxStepRate)))
                 return true;
             // Rebase at the exact next half-step threshold. Timer quantization may
-            // lengthen a profile, but never accumulates debt for a later burst.
+            // lengthen a profile, but never accumulates debt for a later burst. One extra
+            // microsecond keeps the rebased position on the far side of the threshold, so
+            // numerical error can never ask for a step backwards.
             const double crossing =
-                std::clamp(direction_ * (steps + direction_ * 0.5 - start_), 0.0, distance_);
-            double due = 0;
-            if (braking_)
-                due = duration_ -
-                      std::sqrt(std::max(0.0, 2 * (distance_ - crossing) / acceleration_));
-            else if (crossing < peak_ * ramp_ / 2)
-                due = std::sqrt(2 * crossing / acceleration_);
-            else if (crossing > distance_ - peak_ * ramp_ / 2)
-                due = duration_ - std::sqrt(2 * (distance_ - crossing) / acceleration_);
-            else
-                due = crossing / peak_ + ramp_ / 2;
-            const uint64_t dueAt = began_ + static_cast<uint64_t>(std::ceil(due * 1000000.0));
+                std::clamp(direction_ * (steps + delta * 0.5 - start_), 0.0, profile_.distance());
+            const double due = profile_.timeAt(crossing, t);
+            const uint64_t dueAt = began_ + static_cast<uint64_t>(std::ceil(due * 1000000.0)) + 1;
             if (now < dueAt)
                 return true;
             began_ += now - dueAt;
-            t = static_cast<double>(now - began_) / 1000000.0;
+            t = elapsed(now);
             sample(t);
+            elapsed_ = t;
             const int direction = (delta > 0 ? 1 : -1) * (config.inverted ? -1 : 1);
             phase = static_cast<uint8_t>((phase + direction + 8) % 8);
             steps += delta;
             lastStep_ = now;
         }
-        if (t >= duration_ && steps == target_)
+        if (t >= profile_.duration() && steps == target_)
             moving = false;
         return true;
     }
     double velocity() const { return velocity_ / config.stepsPerDegree(); }
+    double acceleration() const { return acceleration_ / config.stepsPerDegree(); }
+    // Seconds of planned motion left as of the latest tick.
+    double remaining() const { return moving ? std::max(0.0, profile_.duration() - elapsed_) : 0; }
+    // Seconds a rest-to-rest move from step `from` to `degrees` would take (0 if none).
+    double estimate(int32_t from, double degrees, const Scales &scales) const {
+        Profile probe;
+        const double distance = std::abs(static_cast<double>(config.quantize(degrees) - from));
+        return probe.planRestToRest(distance, ceilings(scales)) ? probe.duration() : 0;
+    }
+    // Step the axis is heading for, or holding when idle or braking to a stop.
+    int32_t destination() const { return moving ? target_ : steps; }
+    bool braking() const { return moving && braking_; }
 
   private:
-    double start_ = 0, position_ = 0, velocity_ = 0, direction_ = 1;
-    double peak_ = 0, acceleration_ = 0, ramp_ = 0, duration_ = 0, distance_ = 0;
+    Profile profile_;
+    Limits limits_, stopLimits_;
+    double start_ = 0, position_ = 0, velocity_ = 0, acceleration_ = 0, elapsed_ = 0;
+    int direction_ = 1;
     int32_t target_ = 0;
     uint64_t began_ = 0, lastStep_ = 0;
     bool braking_ = false;
 
-    void sample(double t) {
-        double traveled = 0, speed = 0;
-        if (t >= duration_) {
-            position_ = target_;
-        } else if (braking_) {
-            traveled = peak_ * t - acceleration_ * t * t / 2;
-            speed = peak_ - acceleration_ * t;
-            position_ = start_ + direction_ * traveled;
-        } else {
-            if (t < ramp_) {
-                traveled = acceleration_ * t * t / 2;
-                speed = acceleration_ * t;
-            } else if (t < duration_ - ramp_) {
-                traveled = peak_ * (t - ramp_ / 2);
-                speed = peak_;
-            } else {
-                const double remaining = duration_ - t;
-                traveled = distance_ - acceleration_ * remaining * remaining / 2;
-                speed = acceleration_ * remaining;
-            }
-            position_ = start_ + direction_ * traveled;
-        }
-        velocity_ = direction_ * speed;
+    Limits ceilings(const Scales &scales) const {
+        const double perDegree = config.stepsPerDegree();
+        return {config.speed * scales.speed * perDegree,
+                config.acceleration * scales.accel * perDegree,
+                config.jerk * scales.jerk * perDegree};
     }
-
-    void beginSteps(int32_t target, uint64_t now, double scale) {
-        target_ = target;
-        start_ = steps;
-        position_ = start_;
-        distance_ = std::abs(target_ - start_);
-        direction_ = target_ < start_ ? -1 : 1;
-        acceleration_ = config.acceleration * config.stepsPerDegree();
-        const double maxSpeed = config.speed * config.stepsPerDegree() * scale;
-        ramp_ = std::min(maxSpeed / acceleration_, std::sqrt(distance_ / acceleration_));
-        peak_ = acceleration_ * ramp_;
-        duration_ = peak_ > 0 ? distance_ / peak_ + ramp_ : 0;
-        velocity_ = 0;
-        began_ = now;
-        braking_ = false;
-        moving = target_ != steps;
+    double elapsed(uint64_t now) const {
+        return now > began_ ? static_cast<double>(now - began_) / 1000000.0 : 0;
+    }
+    void sample(double t) {
+        double x, v, a;
+        profile_.evaluate(t, x, v, a);
+        position_ = start_ + direction_ * x;
+        velocity_ = direction_ * v;
+        acceleration_ = direction_ * a;
     }
 };
 } // namespace camx

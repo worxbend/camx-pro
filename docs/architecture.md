@@ -10,7 +10,7 @@ projects. Keep hardware control separate from geometry inspection.
 | `apps/site/` | Project overview and Three.js CAD inspector | npm workspace `@camx/site` |
 | `apps/remote/` | Solid.js 2 browser remote and demo | npm workspace `@camx/remote` |
 | `apps/tui/` | Scala/Glyphora terminal remote | Pinned Mill build |
-| `packages/control/` | Browser session ordering, HTTP transport and UI simulator | Node tests |
+| `packages/control/` | Web remote's session ordering, HTTP transport and UI simulator | Node tests |
 | `packages/bridge/` | Loopback-only static host and bounded ESP32 proxy | Node HTTP tests |
 | `contracts/` | Firmware-generated JSON compatibility fixture | JS and Scala consumers |
 | `tests/integration/` | Browser scenarios and firmware-backed HTTP fixture | Playwright / native C++ |
@@ -24,7 +24,7 @@ projects. Keep hardware control separate from geometry inspection.
 - Keep project-specific source, tests, documentation and tooling inside its
   project. Mechanical audits belong in `hardware/tools/`; native firmware checks
   belong in `firmware/tools/`; terminal checks belong in `apps/tui/scripts/`.
-- Shared JavaScript packages use `src/` and `test/`. Import public package
+- JavaScript packages use `src/` and `test/`. Import public package
   exports (for example `@camx/control`), not another project's internal files.
 - Put tests that exercise multiple projects in `tests/integration/`. Keep
   compatibility fixtures in `contracts/` and generate them from the firmware.
@@ -46,14 +46,16 @@ Mill from `apps/tui/`. `make help` lists the root entry points.
 JavaScript, JSX, JSON, CSS and HTML use the root Prettier configuration (two-space
 indentation); run `npm run format:check` or `npm run format`. Scala uses the
 Scala 3 significant-indentation style; C++ retains the firmware clang-format rules.
-The original `AGENTS.md` is intentionally preserved; this document and README
-record the now-established layout and commands.
+`AGENTS.md` summarizes this layout and the common commands for coding agents; update
+it together with this document and the README.
 
 ## Interfaces and publishing
 
 The [firmware API](../firmware/docs/api.md) is the shared language-independent control contract.
-The web app imports `@camx/control`; the Scala client implements the same contract
-and tests the same firmware-generated state fixture. Its controls use degree
+The web app imports `@camx/control` (its only consumer today); the Scala client
+implements the same contract and tests the same firmware-generated state fixture.
+Both read `api_minor` and offer firmware 1.1.0 features only when the device reports
+them; with 1.0.0 firmware they hide those features and never send their commands. Its controls use degree
 units, never raw coil phases or servo pulses. The mechanical constants flow from
 `hardware/cad/parameters.json` through `tools/contracts/firmware.py` into the C++ build.
 

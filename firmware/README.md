@@ -105,8 +105,9 @@ local development.
    initial phase can cause a small settling movement: keep clear and verify it.
 3. Start with one-degree moves on one axis at a time. Verify direction, then
    configure inversion while released if necessary and repeat the reference.
-4. Defaults limit pan to **±20°** and tilt to **±15°**, at **4°/s**, **8°/s²**.
-   Inspect clearance and cable behavior throughout this reduced travel first.
+4. Defaults limit pan to **±20°** and tilt to **±15°**, at **4°/s**, **8°/s²** and
+   **80°/s³** jerk. Inspect clearance and cable behavior throughout this reduced
+   travel first.
 5. Measure repeatable travel with an external angle reference. Adjust each
    `*_steps` independently: `new_steps = old_steps × commanded_angle / measured_angle`.
    Approach measurements from the same direction to separate backlash from
@@ -115,6 +116,13 @@ local development.
    Only then set `commissioned: true` and explicitly widen limits, up to the CAD
    envelope **pan −160…160°, tilt −30…90°**. Setting the flag alone does not
    widen travel. Leave margin before physical stops and cable tension.
+
+Tune the feel without touching calibration: `motion` (or the panel's *Motion feel*)
+lowers speed, acceleration and jerk for new moves at runtime, with no re-reference.
+If a motor skips or the printed gears chatter, lower the acceleration percentage
+first, then the jerk; lowering `*_jerk` in the settings makes that permanent. A jerk
+near the acceleration number (for example 10°/s³ with 8°/s²) gives very soft starts
+and stops at the cost of longer moves; the default ten-times ratio ramps in 0.1 s.
 
 Motor speed limits apply at the **axis**, after both reductions. The hard
 scheduler ceiling is 800 half-steps/s; that is a software ceiling, not a claim
@@ -128,11 +136,23 @@ position. There is no automatic hold-current reduction on ULN2003.
 - `include/camx/`: portable C++17 motion, protocol, bounded HTTP parser, settings
   codec and status serialization; `src/main.cpp`: ESP32 GPIO/network/NVS adapter.
 - `web/index.html`: served from firmware; no filesystem upload or internet/CDN
-  dependency. `tests/`: host tests and browser fixture. `.clang-format`: C++ style.
-- Rest-to-rest trapezoidal profiles accelerate and decelerate each axis
-  independently. Arrival times need not match. New position moves and direction
-  changes return `busy` during motion; release a jog and wait before reversing.
-  Acceleration is bounded; jerk is not bounded as it was in camx's Ruckig planner.
+  dependency. It offers eight-direction jog (diagonals drive both axes), motion
+  feel, retargeting, named presets and the last-pose hint; a jog pressed while a
+  status poll is in flight starts when the poll returns. `tests/`: host tests and
+  browser fixture. `.clang-format`: C++ style.
+- Moves are jerk-limited S-curves (`include/camx/profile.hpp`): speed, acceleration
+  and jerk never exceed the configured values, and every stop (jog release, lease
+  expiry, retarget) is planned from the exact present speed and acceleration. Pan
+  and tilt of one position move arrive together, the quicker axis being stretched
+  in time. `motion` scales speed/acceleration/jerk down at runtime, a move can carry
+  its own `speed`, and `"retarget":true` brakes and then goes to the newest target
+  instead of answering `busy`. Without `retarget`, a new position move, or a jog in
+  a new direction, still returns `busy` during motion; release a jog and wait before
+  reversing. A stop uses the move's ceilings from before the synchronization
+  stretch, so the slowed-down axis stops as promptly as the leading one (the two then
+  stop independently). Unlike camx's Ruckig planner this one handles rest-to-rest
+  moves and stops only; it does not blend a new target into a running move without
+  braking.
 - A 250 µs `ESP_TIMER_TASK` callback advances the motor state under a short
   mutex. Parsing, networking, NVS and serialization happen outside that callback.
   It emits at most one half-step per axis per callback, keeps step intervals
@@ -142,6 +162,11 @@ position. There is no automatic hold-current reduction on ULN2003.
 - [Espressif documents task/flash-related timer delays](https://docs.espressif.com/projects/esp-idf/en/v4.4.8/esp32/api-reference/system/esp_timer.html).
   Scheduling is not a hard real-time guarantee. Measure waveforms with Wi-Fi
   traffic and check `max_tick_gap_us`/`timing_faults` during bench qualification.
+  The ESP32 has no double-precision hardware: S-curve planning and the per-step
+  time search are software floating point. They fit comfortably in the host model
+  (about 2.7 search rounds per step on average) but **have not been timed on a
+  board**. Read `max_tick_cost_us` while moving both axes at full speed with Wi-Fi
+  traffic; it must stay well below 250 µs.
 - Jog commands need renewal within **500 ms**; expiry decelerates to rest.
   Active controllers send heartbeats at least every second. **5 s** without an
   accepted command latches STOP. Wi-Fi link loss also stops; reconnection never
@@ -149,10 +174,21 @@ position. There is no automatic hold-current reduction on ULN2003.
 - STOP holds the last phase. If motion was interrupted, its position is no
   longer trusted. Recovery is **support → release → align → reference → arm**.
   Boot and brownout never restore reference or arm from flash.
-- Eight numeric presets and axis calibration persist in a versioned, CRC32
-  checked NVS blob. Writes require released motors. A changed mechanical
-  fingerprint or corrupt blob falls back to reduced defaults. Storage failures
-  are reported; RAM settings may remain active until reboot.
+- Eight presets (angles and an optional 16-character name), axis calibration
+  including jerk, and the last resting pose persist in a versioned, CRC32 checked
+  NVS blob (392 bytes; blobs written by firmware 1.0.0 are still read and keep
+  their presets). Flash is never written while armed: saving the present pose or
+  clearing a preset while armed only marks the settings dirty, and the write
+  happens when the motors are released. A changed mechanical fingerprint or corrupt
+  blob falls back to reduced defaults. Storage failures are reported; RAM settings
+  may remain active until reboot.
+- The last resting pose is a hint for the next manual reference, offered by the
+  panel (*Use as reference*) and the remotes, never applied automatically. Only the
+  release of an armed session replaces it (a STOP at rest keeps it valid; interrupted
+  motion or a timing fault records none). An accepted `arm` erases it from flash
+  first, with the coils still off, so a reset during a session cannot leave a stale
+  hint; the write adds a flash write's latency to `arm`, and a failed write is
+  reported through `storage_ok` without blocking the arm.
 
 There are no installed home sensors or encoders. `reference` is an operator
 acknowledgment; `center` moves to zero. Automatic sensor search is deliberately
