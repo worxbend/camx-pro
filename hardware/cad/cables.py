@@ -5,7 +5,7 @@ are ideal geometric centerlines, not a simulation of cable stiffness or friction
 """
 import math
 import numpy as np
-from build123d import Part, Polygon, extrude, Pos, Plane, Circle, Edge, sweep
+from build123d import Align, Cone, Part, Polygon, Rot, extrude, Pos, Plane, Circle, Edge, sweep
 from shapely.geometry import LineString
 from .geometry import ring, cylinder, box, rounded, xhole
 
@@ -83,14 +83,13 @@ def moving_ceiling():
     return ceiling
 
 
-def build_guides(p,chassis):
+def build_guides(p,chassis,keepout=()):
     # Split fixed guide into three accessible, screw-clamped printed sections.
     # The four columns sit outside both cable sweeps, at the rounded corners.
     tray=ring(148,52,1.2,z=72)+ring(148,146,4.3,z=73.2)
     tray+=ring(54,52,3.9,z=73.2)+ring(112,110,4.0,z=73.2)
     shelf=ring(148,111,1.2,z=77.5)+ring(145,143,5.3,z=78.7)
     roof=ring(146,111,1.2,z=84)
-    from build123d import Rot
     for x in [-54,54]:
         for y in [-54,54]:
             angle=math.degrees(math.atan2(y,x))
@@ -107,6 +106,19 @@ def build_guides(p,chassis):
                     roof-=cylinder(2.3,20,x,y,68)
                     roof-=cylinder(4.2,1,x,y,84.8)
             chassis+=cylinder(6,65,x,y,4)
+            # Widen the root with a flare and gussets, trimmed clear of the
+            # electronics trays and the lid's corner bosses.
+            root=Pos(x,y,4)*Cone(7,3,20,align=(Align.CENTER,Align.CENTER,Align.MIN))
+            for rib in range(0,360,45):
+                gusset=extrude(Plane.XZ*Polygon((0,0),(13,0),(0,30),align=None),1.2,both=True)
+                root+=Pos(x,y,4)*Rot(0,0,angle+rib)*gusset
+            for shape in keepout:
+                b=shape.bounding_box()
+                root-=box(b.size.X+1.2,b.size.Y+1.2,b.size.Z+.6,b.center().X,b.center().Y,b.min.Z)
+            for bx in [-65,65]:
+                for by in [-60,60]:
+                    root-=cylinder(15.4,40,bx,by,4)
+            chassis+=root
             chassis-=cylinder(1.8,8,x,y,62)
     for c in specifications().values():
         channel=projected_channel(fixed_drop(c,np.linspace(0,1,49)),c['diam']/2+1,60,24)
