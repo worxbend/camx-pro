@@ -5,14 +5,14 @@ local geometry, motion, export and slicing checks pass. Physical qualification
 remains open. These results support fit prototyping, not a guaranteed functional
 or production-qualified assembly.
 
-CAD SHA-256:
-`e4c21f8d19f0f99686df31db197c5dc1f92c9f2122c89296a7542fc9b7d24460`
+CAD SHA-256 (re-verified 2026-10-25 after the base column reinforcement):
+`d3cd172448dd1d1a7f3b6e78b125dc25e16eb60e9dd4eb934b0805bdf9a10e2a`
 
 ## Results
 
 | Check | Evidence |
 |---|---|
-| Regression suite | 21 passed; 14 upstream Lib3MF deprecation warnings |
+| Regression suite | 29 passed, including the printed-substitute tests; 14 upstream Lib3MF deprecation warnings |
 | Sixteen P2 interfaces | All 16 nominal CAD probes passed |
 | Printable geometry | 47 valid, connected parts; watertight, consistently wound STL meshes |
 | STEP round-trips | Passed; see bonnet boundary comparison below |
@@ -21,17 +21,31 @@ CAD SHA-256:
 | Whole-assembly motion | 69 poses, 147,217 computed pair checks and 215,240 rigid-invariance reuses; no overlaps above 0.05 mm³ |
 | Dense tilt | 71,753 pair checks at 1° increments, including ±1 mm motor adjustment; zero overlap |
 | Planetary profiles | 11,528 checks at 0.25° carrier increments; zero overlap; minimum sampled profile gap 0.139 mm |
-| Independent tilt review | 363 combined poses / 2,178 pairs; zero overlap |
+| Independent tilt review | 363 combined poses / 2,178 pairs; zero overlap. Recorded for CAD `e4c21f8d…`; not re-run, as the later change is confined to the stationary base shell |
 | Pan cable paths | 65 pan samples, 0.6 mm centerline spacing, actual guide meshes; passed |
 | Parameter propagation | Bearing-clearance and bonnet-wall changes alter the generated solids |
 | Print-layer screening | 3,616 layers across 47 parts; no section errors |
-| Slicing | All 17 plates passed; minimum extruded-path center margin to bed edge 2.822 mm |
+| Slicing | All 17 plates passed with PrusaSlicer 2.9.4; minimum extruded-path center margin to bed edge 2.822 mm |
+| Release package | 285 checksums, 47 individual 3MF files, 17 plates and 18 archived CAD files passed |
 | Viewer model | 103 GLB components, coordinate conversion, offset tilt drive and planetary joint checks passed |
 | Viewer build | Vite build passed; nonblocking Three.js bundle-size warning |
 
 Machine-readable evidence is in `exports/reports/` and
 `exports/reports/preprint/`. Each report identifies the CAD revision. Plate
 reports also identify the exact 3MF bytes; packaging checks those hashes.
+
+## Base column reinforcement
+
+The four 6 mm cable-guide columns in the base shell gained a conical root
+flare (Ø14 mm at the floor, blending into the column 20 mm up) and up to eight
+2.4 mm gussets reaching 13 mm out and 30 mm up. The reinforcement is trimmed to
+keep 0.6 mm clear of the electronics trays and 0.2 mm radial clearance around
+the lid's corner bosses, so columns next to trays carry fewer gussets. The
+nearest gusset is about 63 mm from the pan axis; moving parts below Z36 stay
+within 35 mm. The base shell remains one valid solid with no new layer islands.
+Every check in the table above except the independent tilt review was re-run
+for this revision. The strength gain is geometric only; no load or print test
+has been performed.
 
 ## Corrections found during final verification
 
