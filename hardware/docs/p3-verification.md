@@ -1,9 +1,8 @@
 # P3 local verification
 
-CAD corrections for the sixteen P2 findings are implemented, and all required
-local geometry, motion, export and slicing checks pass. Physical qualification
-remains open. These results support fit prototyping, not a guaranteed functional
-or production-qualified assembly.
+All local geometry, motion, export and slicing checks pass. Physical qualification
+is open. These results support fit prototyping, not a functional or
+production-qualified assembly.
 
 CAD SHA-256 (re-verified 2026-10-25 after the base column reinforcement):
 `d3cd172448dd1d1a7f3b6e78b125dc25e16eb60e9dd4eb934b0805bdf9a10e2a`
@@ -13,7 +12,7 @@ CAD SHA-256 (re-verified 2026-10-25 after the base column reinforcement):
 | Check | Evidence |
 |---|---|
 | Regression suite | 29 passed, including the printed-substitute tests; 14 upstream Lib3MF deprecation warnings |
-| Sixteen P2 interfaces | All 16 nominal CAD probes passed |
+| Mechanical interfaces | All 16 nominal CAD probes passed |
 | Printable geometry | 47 valid, connected parts; watertight, consistently wound STL meshes |
 | STEP round-trips | Passed; see bonnet boundary comparison below |
 | Plate geometry | 17 layouts fit the A1 mini with the configured margins |
@@ -74,7 +73,7 @@ hardware and one fit coupon. Its overall bounds are approximately
 162.08×163.04×182 mm; it is assembled from individually printable parts.
 The largest part footprint is approximately 162.08×162.08 mm.
 
-PLA is owner-selected; a 0.4 mm nozzle is assumed from the “4mm” reply.
+Material: PLA. Nozzle: 0.4 mm, assumed.
 Thirty-two parts have geometric overhang flags. The USB power tray and fixed
 cable guide tray also contain layers that need support beneath new regions.
 Use the actual Bambu Studio material profile and inspect support removal.
@@ -104,4 +103,4 @@ thermal performance or service life.
 
 Finite sampling is not general continuous-motion proof. No physical printing,
 electrical test or powered motion has been performed. See the
-[closure register](p3-design-closure.md) and [assembly guide](assembly.md).
+[status](status.md) and [assembly guide](assembly.md).

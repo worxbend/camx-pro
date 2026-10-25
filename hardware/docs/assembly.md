@@ -2,7 +2,7 @@
 
 ## Print and fit sequence
 
-Use the A1 mini, PLA and an assumed 0.4 mm nozzle; confirm the installed nozzle. Import the geometry-only plate 3MFs into Bambu Studio with the actual PLA profile. Start with 0.2 mm layers, four walls and 30% infill; inspect every plate and its supports. The generic local slicer audit is not a machine profile.
+Use the A1 mini, PLA and a 0.4 mm nozzle (assumed; confirm the installed one). Import the geometry-only plate 3MFs into Bambu Studio with the actual PLA profile. Start with 0.2 mm layers, four walls and 30% infill; inspect every plate and its supports. The generic local slicer audit is not a machine profile.
 
 Run `tools.prepare_print_plates` after CAD export. The raised USB power tray has a separate plate, and the small clamp plate uses 20 mm spacing because generated supports reached neighboring parts in the original packing. Preserve that separation when importing into Bambu Studio.
 
@@ -34,4 +34,4 @@ Planet caps print inverted, nose upward. Side covers and small clamp caps print 
 
 Start with restricted travel and one motor at a time. Measure backlash, repeatability, cable drag, coil temperature, PLA temperature and supply droop. No motion firmware or homing mechanism is commissioned by this CAD package. Keep open-loop full travel disabled until a repeatable reference and limits are implemented.
 
-For service, disconnect power and support the upper assembly. Remove the cradle as required for the cardinal platform screws, release the cable clamps, then remove the upper assembly and bonnet. The two-piece rotating ceiling can be removed radially; fixed roofs lift off after their corner screws are removed. See `p3-design-closure.md` for release gates.
+For service, disconnect power and support the upper assembly. Remove the cradle as required for the cardinal platform screws, release the cable clamps, then remove the upper assembly and bonnet. The two-piece rotating ceiling can be removed radially; fixed roofs lift off after their corner screws are removed. See the [physical release gates](p3-verification.md#physical-release-gates).

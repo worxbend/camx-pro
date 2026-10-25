@@ -36,9 +36,9 @@ npx playwright install chromium
 npm run test:firmware-ui
 ```
 
-This runs the actual portable C++ controller behind a local browser fixture.
-It exercises software behavior without GPIO. It does not emulate Wi-Fi or
-ESP32 scheduling. CI builds the public firmware and runs both test suites.
+This runs the real portable C++ controller behind a local browser fixture:
+software behavior only, no GPIO, Wi-Fi or ESP32 scheduling. CI builds the public
+firmware and runs both test suites.
 
 ## Wiring
 
@@ -68,8 +68,8 @@ if the actual modules leave those inputs floating.
 
 An optional normally closed stop contact can use **GPIO32 to GND**. Set
 `board::stopPin = 32` in `include/board.hpp` only after wiring it. Open/high
-latches STOP; closing it does not resume motion. It is disabled by default
-because no switch was confirmed. This GPIO input and the HTTP STOP button are
+latches STOP; closing it does not resume motion. Disabled by default: no switch
+is confirmed. This GPIO input and the HTTP STOP button are
 software stops; neither disconnects motor power independently of firmware.
 
 ## Configure and flash
@@ -93,8 +93,7 @@ is created. Configured binaries contain your credentials and must stay private.
 HTTP is for a trusted local network; the bearer token is not encrypted on the
 wire. Use a secured host bridge/VPN for remote access, not a public port forward.
 
-No upload, powered motor test or electrical verification was performed during
-local development.
+Not yet done on hardware: upload, powered motor test, electrical verification.
 
 ## First motion and calibration
 

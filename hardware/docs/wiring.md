@@ -27,7 +27,7 @@ draw 3 A. See [TI USB Type-C guidance](https://www.ti.com/lit/SLYY228).
 Use one selected power path to the ESP32 while programming. Do not assume its
 USB input is isolated from its 5 V pin. The
 [Espressif DevKitC guide](https://documentation.espressif.com/esp-dev-kits/en/latest/esp32/esp32-devkitc/user_guide.html)
-describes power-source alternatives; verify the owner's clone board separately.
+describes power-source alternatives; verify a clone board separately.
 Bulk capacitance and local bypass parts belong near the drivers and distribution
 node, with values selected after startup/supply-sag measurements.
 
@@ -35,12 +35,12 @@ node, with values selected after startup/supply-sag measurements.
 
 The fixed pan motor and both drivers stay in the base. Only tilt leads, webcam USB and any future sensors cross the moving interface. Never route cables through planetary teeth or the sun journal.
 
-`cad/cables.py` defines two constant-length ideal rolling paths. See `exports/drawings/cable-routing.svg` and the source-hashed tube/mesh report. The motor bundle is provisionally Ø3 mm atZ75, with inner/outer centerline radii29/53 mm and12 mm return radius. USB is provisionally Ø4 mm atZ81, radii29/69 mm and20 mm return radius. The fixed tray, shelf and roof are separate; the inner rotating ceiling has two removable halves. Sidewalls and shallow layer clearances limit cable lifting.
+`cad/cables.py` defines two constant-length ideal rolling paths. See `exports/drawings/cable-routing.svg` and the source-hashed tube/mesh report. The motor bundle is provisionally Ø3 mm at Z75, with inner/outer centerline radii 29/53 mm and 12 mm return radius. USB is provisionally Ø4 mm at Z81, radii 29/69 mm and 20 mm return radius. The fixed tray, shelf and roof are separate; the inner rotating ceiling has two removable halves. Sidewalls and shallow layer clearances limit cable lifting.
 
-Fixed split clamps sit below the entry bends. Moving risers terminate in a split clamp inside the passive arm. The platform/skirt window is16×20 mm; the inner service port is20 mm. Lay cables in before fitting roofs and caps. Use thin compliant liners; the nominal0.2 mm radial clamp allowance is not itself a gripping fit. Confirm actual motor plug passage before assembly.
+Fixed split clamps sit below the entry bends. Moving risers terminate in a split clamp inside the passive arm. The platform/skirt window is 16×20 mm; the inner service port is 20 mm. Lay cables in before fitting roofs and caps. Use thin compliant liners; the nominal 0.2 mm radial clamp allowance is not itself a gripping fit. Confirm actual motor plug passage before assembly.
 
 Route stationary tails below the guide tray to their drivers/external exit, clear of gears and populated boards. Keep an accessible tilt service loop behind the webcam, free of its connector and shutter. **These tails and the camera tilt loop remain unmodeled and require manual sweep qualification.** The mathematical rolling paths do not predict flexible cable stiffness, drag or wear.
 
-The webcam exits at rearX0 through a seam-open notch and removable split inserts. The intact12×8 mm reference plug can be oriented8 mm across the opening; no cable cutting is required. The power connector remains separate atX36. Verify the actual breakout pinout and connector location.
+The webcam exits at rear X0 through a seam-open notch and removable split inserts. The intact 12×8 mm reference plug can be oriented 8 mm across the opening; no cable cutting is required. The power connector remains separate at X36. Verify the actual breakout pinout and connector location.
 
 Hand-sweep every extreme and combined pose repeatedly, initially without the real camera. Record cable length, bend radius, rubbing, clamp grip and drag torque. Do not allow continuous pan rotation. Open-loop step counts cannot detect slips or a snag; power loss invalidates the reference. The [firmware wiring and commissioning guide](../../firmware/README.md) specifies GPIO16/17/18/19 for pan and GPIO21/22/23/25 for tilt, in ULN2003 IN1–IN4 order. The implementation uses manual reference and reduced initial limits; actual directions, limits, stopping and electrical behavior require bench qualification.

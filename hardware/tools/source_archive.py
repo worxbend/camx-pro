@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 
 SOURCE_DIRS = ('hardware', 'firmware', 'apps', 'packages', 'contracts', 'docs', 'tests', 'tools', '.github')
-ROOT_FILES = ('README.md', 'AGENTS.md', 'Makefile', 'package.json', 'package-lock.json',
+ROOT_FILES = ('README.md', 'Makefile', 'package.json', 'package-lock.json',
               'playwright.config.js', '.prettierrc.json', '.gitignore')
 SKIP_DIRS = {'node_modules', 'dist', 'out', 'exports', 'release', '.venv', 'venv', '.pio',
              'build', 'data', '__pycache__', '.pytest_cache', '.bsp', '.scala-build',

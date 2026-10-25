@@ -142,7 +142,7 @@ def main():
     rows += [[name, " × ".join(f"{v:.1f}" for v in part["print_bounds_mm"])]
              for name, part in manifest["parts"].items() if part["printed"]]
     story += [table(rows, [280, 190]), PageBreak()]
-    for name in ["p3-verification", "p3-design-closure", "c200-manufacturer-data", "motor-placement", "planetary-actuator", "measurements", "assembly", "wiring", "control-contract"]:
+    for name in ["p3-verification", "c200-manufacturer-data", "motor-placement", "planetary-actuator", "measurements", "assembly", "wiring", "control-contract"]:
         story.extend(markdown(ROOT / "docs" / f"{name}.md"))
         story.append(PageBreak())
     story.append(paragraph("Bill of materials / provisional", "Heading1"))

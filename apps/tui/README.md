@@ -1,7 +1,7 @@
 # CAMX Pro terminal remote
 
-A Scala 3 / Glyphora application for the ESP32 stepper controller. Requires JDK 25.
-The pinned Mill launcher and published Maven dependencies need no sibling checkout.
+Scala 3 / Glyphora terminal remote for the ESP32 stepper controller. Requires JDK 25.
+Pinned Mill launcher and published Maven dependencies; no sibling checkout needed.
 
 ```sh
 ./mill app.run --demo
@@ -12,9 +12,8 @@ python3 scripts/test_environment.py
 python3 scripts/test_pty.py
 ```
 
-The packaged checks run after assembly, using only a loopback device fixture
-and a demo terminal. The environment check verifies that an unrelated token
-cannot configure this application.
+Packaged checks run after assembly against a loopback device fixture and a demo
+terminal. The environment check proves an unrelated token cannot configure the app.
 
 Live mode prompts for the API token or reads `CAMX_PRO_API_TOKEN`. `--json` reads state
 once without moving anything. Tab/mouse selects controls; Alt+arrows request bounded
@@ -31,5 +30,5 @@ certificate; `MILL_VERSION=1.1.9-jvm ./mill app.test` runs the JVM launcher, whi
 the JDK trust store.
 
 Read the [operator guide](../../docs/controllers.md) for physical reference,
-arming, presets, token handling and failure behavior. No hardware has been moved
-by the automated tests. Demo positions are simulated.
+arming, presets, token handling and failure behavior. Automated tests move no
+hardware. Demo positions are simulated.

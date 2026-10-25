@@ -6,6 +6,6 @@ The tilt motor lies horizontally in the rear bridge of the U-frame, output towar
 
 A true normal-offset curved bonnet encloses the electronics, actuator and two cable layers. Nominal section dimensions are 160×160 mm and height 89.5 mm; actual loft bounds are in the export manifest. This enlarged base is required by the proposed 20 mm USB return bend and accessible guide sections. The matte-black U-body remains the selected design language.
 
-The four planets retain the requested compact coaxial actuator. A direct pan drive would use fewer parts, but would remove the requested planetary stage. The low rear tilt motor avoids a large external side pod and keeps its mass close to the pan axis. These decisions balance the owned motors, independent support, printing access and cable space; they do not establish globally optimal dimensions.
+Four planets keep the actuator compact and coaxial. A direct pan drive would use fewer parts but drop the planetary stage. The low rear tilt motor avoids a large external side pod and keeps its mass close to the pan axis. These decisions balance the available motors, independent support, printing access and cable space; they do not establish globally optimal dimensions.
 
-Review `p3-design-closure.md`, the sourced C200 data and the current generated reports before printing. The actual camera, connector and populated-board dimensions can still require a fit revision.
+Before printing, review the [verification record](p3-verification.md), the [C200 data](c200-manufacturer-data.md) and the current generated reports. The actual camera, connector and populated-board dimensions can still require a fit revision.

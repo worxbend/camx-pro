@@ -2,16 +2,16 @@
 
 ## Confirmed and inferred
 
-The owner confirmed **Bambu Lab A1 mini**. Its manufacturer specifies a
+Printer: **Bambu Lab A1 mini**, with a
 [180 × 180 × 180 mm build volume](https://cdn1.bambulab.com/documentation/quick-start-f507128172bdf/Quick%20start%20guide%20-%20A1%20mini-EN.pdf).
-The owner selected PLA; 0.4 mm is assumed from the stated “4mm nozzle”. The exact nozzle and material profile need confirmation.
+Material: PLA. Nozzle: 0.4 mm assumed. Confirm the exact nozzle and material profile.
 
 The photos show two motors marked 28BYJ-48 / 5 V, an ESP32 development board,
 one front-facing ULN2003-type board, another board seen from the rear and a small
 connector breakout. The latter board identities and connector pinouts require
-inspection. Capacitors and the custom integration PCB are owner-reported.
+inspection. Capacitors and the custom integration PCB are reported, not photographed in detail.
 
-The owner identified the webcam as the **Anker PowerConf C200**. Manufacturer data is recorded in [c200-manufacturer-data.md](c200-manufacturer-data.md). No scale or orthographic measurement reference is present, so photo
+The webcam is the **Anker PowerConf C200**. Manufacturer data is recorded in [c200-manufacturer-data.md](c200-manufacturer-data.md). No scale or orthographic measurement reference is present, so photo
 pixels are not used as exact dimensions. The marketing camera image establishes
 styling only.
 
@@ -35,7 +35,7 @@ Record caliper measurements in `cad/parameters.json` and matching provenance in
 | Integration PCB | 38 × 24 × 10 mm | Actual populated envelope and mounting scheme |
 | Power breakout | 12 × 18 × 5 mm | Connector opening, pin labels, CC termination and current rating |
 | Bearings / shafts | See BOM | Measure received bearing OD/ID/width and shaft diameter |
-| Filament | PLA owner-selected | Actual material, shrinkage, bearing-hole coupon results |
+| Filament | PLA | Actual material, shrinkage, bearing-hole coupon results |
 
 The folded clip is included in the full camera envelope. `clip_depth` is
 recorded for future detailed hardware modeling; it does not currently alter

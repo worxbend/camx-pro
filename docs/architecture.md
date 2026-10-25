@@ -1,19 +1,19 @@
 # Monorepo organization
 
 CAMX Pro has independently buildable mechanical, embedded, browser and terminal
-projects. Keep hardware control separate from geometry inspection.
+projects. Hardware control stays separate from geometry inspection.
 
-CAMX Pro owns its source, device protocol, configuration and release lifecycle.
-A fresh checkout builds with its declared toolchains and package dependencies;
-no sibling checkout, cross-repository symlink or external project's generated
-output is required. Website CAD downloads come from this repository's pinned
+The repository owns its source, device protocol, configuration and release
+lifecycle. A fresh checkout builds with its declared toolchains and package
+dependencies. No sibling checkout, cross-repository symlink or external generated
+output is needed. Website CAD downloads come from this repository's pinned
 releases and can be regenerated from `hardware/`.
 
-Internal npm packages use the `@camx-pro/*` scope. The bridge reads
-`CAMX_PRO_DEVICE_URL` and `CAMX_PRO_PORT`; the terminal remote reads
-`CAMX_PRO_API_TOKEN`. Unscoped environment variables are not configuration
-fallbacks. Device settings use the `camx-pro-v1` NVS namespace, and browser tokens
-stay in memory. Compatibility promises apply to CAMX Pro's own versioned API.
+- npm packages use the `@camx-pro/*` scope.
+- The bridge reads `CAMX_PRO_DEVICE_URL` and `CAMX_PRO_PORT`. The terminal remote
+  reads `CAMX_PRO_API_TOKEN`. Unscoped variables are not fallbacks.
+- Device settings use the `camx-pro-v1` NVS namespace. Browser tokens stay in memory.
+- Compatibility promises cover CAMX Pro's own versioned API only.
 
 | Directory | Responsibility | Build/test owner |
 | --- | --- | --- |
@@ -33,64 +33,55 @@ stay in memory. Compatibility promises apply to CAMX Pro's own versioned API.
 
 ## Placement and dependency rules
 
-- Keep project-specific source, tests, documentation and tooling inside its
-  project. Mechanical audits belong in `hardware/tools/`; native firmware checks
-  belong in `firmware/tools/`; terminal checks belong in `apps/tui/scripts/`.
-- JavaScript packages use `src/` and `test/`. Import public package
-  exports (for example `@camx-pro/control`), not another project's internal files.
-- Put tests that exercise multiple projects in `tests/integration/`. Keep
-  compatibility fixtures in `contracts/` and generate them from the firmware.
-- Use root `tools/` only for automation that crosses project boundaries. Keep
-  engineering references in `hardware/references/`, not beside root configuration.
-- Add a root Make target or npm script for common workflows; keep tool-specific
-  configuration in the owning project. Do not commit generated exports or caches.
+- Project source, tests, docs and tooling live inside the project. Mechanical
+  audits go in `hardware/tools/`, native firmware checks in `firmware/tools/`,
+  terminal checks in `apps/tui/scripts/`.
+- JavaScript packages use `src/` and `test/`. Import public package exports
+  (for example `@camx-pro/control`), never another project's internal files.
+- Cross-project tests go in `tests/integration/`. Compatibility fixtures go in
+  `contracts/` and are generated from the firmware.
+- Root `tools/` is only for automation that crosses project boundaries.
+  Engineering references live in `hardware/references/`.
+- Common workflows get a root Make target or npm script. Tool-specific
+  configuration stays in the owning project. Never commit generated exports or caches.
 
 ## Toolchains and working directories
 
-Use one root npm lockfile and install from the root with `npm ci`. Workspace
-commands are exposed in the root package manifest. Python and Mill keep their
-own pinned dependency systems; JavaScript workspaces do not own CAD or firmware.
-Run Python CAD modules from `hardware/` using `hardware/.venv`;
-`make setup-hardware`, `make test-hardware` and `make export-hardware` handle this from
-the repository root. Run PlatformIO with `pio run -d firmware -e public` and
-Mill from `apps/tui/`. `make help` lists the root entry points.
+- One root npm lockfile. Install from the root with `npm ci`. The root manifest
+  exposes workspace commands.
+- Python and Mill keep their own pinned dependency systems. JavaScript workspaces
+  do not own CAD or firmware.
+- Run Python CAD modules from `hardware/` with `hardware/.venv`. From the root,
+  `make setup-hardware`, `make test-hardware` and `make export-hardware` do this.
+- PlatformIO: `pio run -d firmware -e public`. Mill: run from `apps/tui/`.
+- `make help` lists root entry points. The root README lists all build and test commands.
 
-JavaScript, JSX, JSON, CSS and HTML use the root Prettier configuration (two-space
-indentation); run `npm run format:check` or `npm run format`. Scala uses the
-Scala 3 significant-indentation style; C++ retains the firmware clang-format rules.
-`AGENTS.md` summarizes this layout and the common commands for coding agents; update
-it together with this document and the README.
+Formatting: JavaScript, JSX, JSON, CSS and HTML use the root Prettier
+configuration (two spaces); run `npm run format:check` or `npm run format`.
+Scala uses Scala 3 significant indentation. C++ follows `firmware/.clang-format`.
 
 ## Interfaces and publishing
 
-The [firmware API](../firmware/docs/api.md) is the shared language-independent control contract.
-The web app imports `@camx-pro/control` (its only consumer today); the Scala client
-implements the same contract and tests the same firmware-generated state fixture.
-Both read `api_minor` and offer firmware 1.1.0 features only when the device reports
-them; with 1.0.0 firmware they hide those features and never send their commands. Its controls use degree
-units, never raw coil phases or servo pulses. The mechanical constants flow from
-`hardware/cad/parameters.json` through `tools/contracts/firmware.py` into the C++ build.
+The [firmware API](../firmware/docs/api.md) is the shared, language-independent
+control contract.
+
+- The web app imports `@camx-pro/control`, its only consumer. The Scala client
+  implements the same contract and tests the same firmware-generated state fixture.
+- Both clients read `api_minor`. They offer firmware 1.1.0 features only when the
+  device reports them. With 1.0.0 firmware they hide those features and never
+  send their commands.
+- Controls use degrees, never raw coil phases or servo pulses.
+- Mechanical constants flow from `hardware/cad/parameters.json` through
+  `tools/contracts/firmware.py` into the C++ build.
 
 The website build composes the remote at `/control/` and the inspector at
 `/viewer.html`. Public hosting exposes a demo, not a motor API. Live browser
-control uses `browser → localhost bridge → ESP32`; TUI control uses `TUI → ESP32`.
+control is `browser → localhost bridge → ESP32`; TUI control is `TUI → ESP32`.
 Neither client carries webcam video. See [controller operation](controllers.md)
 and [Pages publishing](pages.md).
 
-CI separates mechanical validation, embedded builds, application tests, and
-trusted Pages deployment. Website CAD downloads are tied to a versioned release
-asset by size, SHA-256 and CAD source digest; a fresh runner does not depend on
-an ignored local export folder. Changing geometry requires verified exports and
-a newly pinned asset release. Existing P3 verification documents and manufacturing
-ZIPs are historical snapshots and are not silently rewritten by UI changes.
-
-## Migration from the flat layout
-
-`cad/`, mechanical `tests/` and mechanical `tools/` moved together into
-`hardware/`; their module names remain unchanged. Python dependencies and
-`PLAN.md` moved with them. Hardware photos now live in
-`hardware/references/photos/`. Firmware API/verification docs moved into
-`firmware/docs/`. The root `AGENTS.md` and the CAD source bytes were preserved.
-New manufacturing archives mirror the monorepo layout; the verifier also accepts
-the historical P3 archive layout. Website URLs and pinned release assets remain
-stable.
+CI runs mechanical validation, embedded builds, application tests and trusted
+Pages deployment as separate jobs. Website CAD downloads are pinned to a
+versioned release asset by size, SHA-256 and CAD source digest, so a fresh runner
+needs no local export folder. A geometry change needs verified exports and a new
+release; see [releases](pages.md#releases).

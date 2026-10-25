@@ -1,39 +1,44 @@
 # Mechanical project
 
-Parametric, FDM-printable PTZ housing for the intact Anker PowerConf C200, two
-28BYJ-48 steppers, a 4:1 pan planetary actuator and a concealed 2:1 tilt belt.
-**P3 is an engineering fit prototype.** Digital checks do not establish real
-hardware fit, loaded torque, cable behavior or PLA thermal performance.
+Parametric, FDM-printable pan–tilt housing for an intact Anker PowerConf C200 and
+two 28BYJ-48 steppers. Pan: 4:1 planetary actuator. Tilt: concealed 2:1 belt.
+
+**P3 is an engineering fit prototype.** Parts are printed and fit-checked. Digital
+checks do not prove loaded torque, cable behavior or PLA thermal performance.
+
+**Downloads:** print plates, individual parts, printed substitutes and the full
+prototype package are on the [p3.1 release](https://github.com/worxbend/camx-pro/releases/tag/p3.1).
 
 ## Layout
 
-- `cad/`: build123d geometry, dimensional parameters and provenance.
-- `tools/`: geometry, motion, interface, mesh, print and packaging utilities.
-- `tests/`: mechanical and audit-tool regression tests.
-- `docs/`: assembly, BOM, wiring, measurements and engineering evidence.
-- `references/`: supplied reference images; `photos/` contains the hardware photos.
-- `exports/`: ignored STEP/STL/3MF/GLB, drawings, renders and verification reports.
-- `PLAN.md`: original engineering brief, architecture decisions and execution plan.
+- `cad/`: build123d geometry, parameters and their provenance.
+- `printed_hardware/`: optional printed replacements for purchased hardware.
+- `tools/`: export, motion, interface, mesh, print and packaging tools.
+- `tests/`: mechanical and tool regression tests.
+- `docs/`: assembly, BOM, wiring, measurements and verification.
+- `references/`: reference images; `photos/` holds the hardware photos.
+- `exports/`: generated STEP/STL/3MF/GLB, drawings, renders and reports. Ignored by Git.
 
 ## Mechanism and printer
 
-- Pan: 20T sun, four 20T planets and fixed 60T ring; two independent 6809
-  bearings, captured planet bearings and located steel sleeves.
+- Pan: 20T sun, four 20T planets, fixed 60T ring. Two independent 6809
+  bearings, captured planet bearings, located steel sleeves.
 - Tilt: concealed 20T/40T belt, bearing-supported 28 mm steel trunnions,
-  captured-nut clamps and a defined axial spacer stack.
-- Enclosure: nominal 160 × 160 mm sections, 89.5 mm base height and 3 mm wall;
-  camera pivot at Z154.5. Export manifests record actual bounds.
-- Cables: separate rolling layers, removable guides, split ceilings and strain
-  relief. Fixed tails and the tilt loop need actual-cable assembly trials.
-- Printer: Bambu Lab A1 mini, 180 × 180 × 180 mm build volume, PLA.
+  captured-nut clamps, defined axial spacer stack.
+- Enclosure: nominal 160 × 160 mm sections, 89.5 mm base height, 3 mm wall.
+  Camera pivot at Z154.5. Export manifests record actual bounds.
+- Base columns: four cable-guide columns with flared, gusseted roots.
+- Cables: separate rolling layers, removable guides, split ceilings, strain
+  relief. Fixed tails and the tilt loop need trials with the actual cables.
+- Printer: Bambu Lab A1 mini, 180 × 180 × 180 mm, PLA, 0.4 mm nozzle assumed.
 
-[Anker's data](docs/c200-manufacturer-data.md) gives approximately 55 × 51 × 41 mm
-and 83 g. Dimension axes, folded clip, connector and center of gravity remain
-provisional. Measure these interfaces before a full-size fit print.
+[Anker's data](docs/c200-manufacturer-data.md) gives about 55 × 51 × 41 mm and
+83 g. Dimension axes, folded clip, connector and center of gravity are still
+provisional. Measure them before a full-size fit print.
 
-## Setup and development
+## Setup
 
-From the repository root:
+From the repository root (uv, CPython 3.14, pinned `requirements-audit.txt`):
 
 ```sh
 make setup-hardware
@@ -41,8 +46,9 @@ make test-hardware
 make export-hardware
 ```
 
-These use `uv`, CPython 3.14 and the pinned `requirements-audit.txt`. Alternatively,
-work inside `hardware/`; all CAD modules and audit tools run from this directory:
+## Commands
+
+All CAD modules and tools run from `hardware/`:
 
 ```sh
 cd hardware
@@ -57,6 +63,7 @@ cd hardware
 .venv/bin/python -m tools.verify_cable_routing
 .venv/bin/python -m tools.verify_print_layers
 .venv/bin/python -m tools.verify_slicing --slicer /absolute/path/to/prusa-slicer
+.venv/bin/python -m tools.check_interference
 .venv/bin/python -m tools.drawings
 .venv/bin/python -m tools.render_cables
 .venv/bin/python -m tools.package
@@ -64,22 +71,20 @@ cd hardware
 .venv/bin/python -m tools.stage_viewer
 ```
 
-Packaging refuses missing, failed or stale required CAD reports. The slicer
-configuration audits geometry only; use Bambu Studio with the actual A1 mini/PLA
-profile for printing. Geometry-only 3MFs contain no machine settings or G-code.
-The expected nozzle is **0.4 mm**, assumed from the original “4mm” message.
+- `tools.package` refuses missing, failed or stale CAD reports.
+- `tools.verify_slicing` needs PrusaSlicer 2.9.4 (not in the Python lock). Its
+  configuration audits geometry only. Print with Bambu Studio and the real A1
+  mini/PLA profile. Geometry-only 3MFs hold no machine settings or G-code.
 
-The CAD source bytes and P3 fingerprint were preserved during the monorepo move.
-Existing P3 release ZIPs retain their historical paths. Newly generated packages
-use the current monorepo layout. See the [closure register](docs/p3-design-closure.md),
-[verification record](docs/p3-verification.md), [measurements](docs/measurements.md)
-and [assembly sequence](docs/assembly.md). Begin with the fit coupon.
+## Docs
 
-To avoid buying bearings, shafts and the belt drive, the optional
-[printed substitutes](docs/printed-hardware.md) (`printed_hardware/`) replace them
-inside the same envelopes; P3 parts and reports are unaffected.
+- [Status](docs/status.md) and [verification record](docs/p3-verification.md)
+- [Assembly](docs/assembly.md), [BOM](docs/bom.csv), [wiring](docs/wiring.md)
+- [Measurements](docs/measurements.md), [C200 data](docs/c200-manufacturer-data.md)
+- [Planetary actuator](docs/planetary-actuator.md), [motor placement](docs/motor-placement.md)
+- [Control contract](docs/control-contract.md), [printed substitutes](docs/printed-hardware.md)
 
-The [CAD viewer](../apps/site/) consumes these generated artifacts. Firmware
-constants are checked against `cad/parameters.json` by
-[`tools/contracts/firmware.py`](../tools/contracts/firmware.py); run
-`make check-contract` from the repository root after parameter changes.
+Start with the fit coupon. The [CAD viewer](../apps/site/) uses these exports.
+`make check-contract` checks firmware constants against `cad/parameters.json`
+through [`tools/contracts/firmware.py`](../tools/contracts/firmware.py). Run it after
+parameter changes.

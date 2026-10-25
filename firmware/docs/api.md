@@ -1,7 +1,7 @@
 # CAMX Pro firmware API v1
 
 The ESP32 controls movement only. The Anker C200 sends video directly to the
-host over USB. This versioned API is defined and maintained by CAMX Pro.
+host over USB.
 
 **Firmware 1.1.0 (`"api_minor":1`)** adds only optional fields and operations to
 API v1: jerk-limited motion, synchronized pan/tilt arrival, runtime speed
@@ -119,8 +119,8 @@ against a monotonic clock; nothing is queued or replayed.
   ceilings before the synchronization stretch, so the axis that was slowed down stops as
   promptly as the leading one. The axes stop independently; during a brake the path is
   also not constrained to a straight line.
-* **Jog release** now takes a little longer than a trapezoid did, because the stop ramps
-  its own acceleration down: about 0.5–0.7 s from full speed with the default jerk.
+* **Jog release** takes about 0.5–0.7 s from full speed with the default jerk, because
+  the stop ramps its own acceleration down.
 
 ## Presets and the last pose
 
