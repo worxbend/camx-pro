@@ -1,0 +1,48 @@
+{
+  "status": "Optional printed substitutes for purchased P3 hardware — print trials pending",
+  "clearance": {
+    "print_in_place": 0.3,
+    "coupon": [0.2, 0.25, 0.3, 0.35, 0.4]
+  },
+  "output_bearing": {
+    "rollers": 30,
+    "roller_end_diameter": 2.4,
+    "roller_ridge": 0.6,
+    "roller_flat": 1.0,
+    "roller_top_gap": 0.3
+  },
+  "small_bearing": {
+    "land_diameter": 11.6,
+    "ridge": 1.0,
+    "ridge_flat": 1.0
+  },
+  "shaft": {
+    "diameter": 7.9,
+    "flat_depth": 0.4
+  },
+  "sleeve": {
+    "outer_diameter": 7.95,
+    "bore": 3.4
+  },
+  "pulley": {
+    "groove_radius": 0.6,
+    "groove_depth": 0.75,
+    "lip_height": 1.0,
+    "bore_allowance": 0.2,
+    "set_screw_hole": 1.8,
+    "nut_slot": [4.4, 1.9]
+  },
+  "belt": {
+    "back": 1.2,
+    "tooth_radius": 0.5,
+    "tooth_height": 0.65,
+    "pitch_line_offset": 0.254,
+    "length_offsets": [0, -1.6]
+  },
+  "output_shims": [0.2, 0.4, 0.6],
+  "materials": {
+    "bearing": "PETG or PLA (unfilled; smoother sliding surfaces than CF)",
+    "structural": "PETG-CF",
+    "belt": "TPU 95A"
+  }
+}

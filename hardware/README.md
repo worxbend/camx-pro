@@ -75,6 +75,10 @@ use the current monorepo layout. See the [closure register](docs/p3-design-closu
 [verification record](docs/p3-verification.md), [measurements](docs/measurements.md)
 and [assembly sequence](docs/assembly.md). Begin with the fit coupon.
 
+To avoid buying bearings, shafts and the belt drive, the optional
+[printed substitutes](docs/printed-hardware.md) (`printed_hardware/`) replace them
+inside the same envelopes; P3 parts and reports are unaffected.
+
 The [CAD viewer](../apps/site/) consumes these generated artifacts. Firmware
 constants are checked against `cad/parameters.json` by
 [`tools/contracts/firmware.py`](../tools/contracts/firmware.py); run
