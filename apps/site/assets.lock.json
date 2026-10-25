@@ -1,8 +1,8 @@
 {
-  "url": "https://github.com/worxbend/camx-pro/releases/download/p3-web-assets/camx-pro-p3-web-assets.zip",
-  "bytes": 43051953,
-  "sha256": "7ecb3e5caf578dc11a6f0367b4e60cf3cb703bf3e638cc04c59e610e0e431086",
-  "cad_source_sha256": "e4c21f8d19f0f99686df31db197c5dc1f92c9f2122c89296a7542fc9b7d24460",
+  "url": "https://github.com/worxbend/camx-pro/releases/download/p3.1/camx-pro-p3.1-web-assets.zip",
+  "bytes": 60480145,
+  "sha256": "d60ec584d4a90c86d50a18048f15a1832f6dd16d5de98ca6ab423059b860ae2d",
+  "cad_source_sha256": "d3cd172448dd1d1a7f3b6e78b125dc25e16eb60e9dd4eb934b0805bdf9a10e2a",
   "files": [
     "manifest.json",
     "assembly/camx-pro.glb",

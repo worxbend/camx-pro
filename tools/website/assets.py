@@ -22,7 +22,7 @@ FILES = (
 )
 
 
-def pack():
+def pack(tag):
     source = ROOT / "hardware/exports"
     manifest = json.loads((source / "manifest.json").read_text())
     if manifest["cad_source_sha256"] != source_digest():
@@ -30,7 +30,7 @@ def pack():
     for name in FILES:
         if not (source / name).is_file():
             raise ValueError(f"Missing site asset: {name}")
-    out = ROOT / "release/camx-pro-p3-web-assets.zip"
+    out = ROOT / f"release/camx-pro-{tag}-web-assets.zip"
     out.parent.mkdir(exist_ok=True)
     with zipfile.ZipFile(out, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as bundle:
         for name in FILES:
@@ -41,7 +41,7 @@ def pack():
     with out.open("rb") as data:
         digest = hashlib.file_digest(data, "sha256").hexdigest()
     lock = {
-        "url": "https://github.com/worxbend/camx-pro/releases/download/p3-web-assets/camx-pro-p3-web-assets.zip",
+        "url": f"https://github.com/worxbend/camx-pro/releases/download/{tag}/{out.name}",
         "bytes": out.stat().st_size,
         "sha256": digest,
         "cad_source_sha256": source_digest(),
@@ -49,6 +49,7 @@ def pack():
     }
     LOCK.write_text(json.dumps(lock, indent=2) + "\n")
     print(f"Prepared {out} ({lock['bytes']:,} bytes)")
+    return out
 
 
 def fetch(archive=None):
@@ -99,5 +100,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("command", choices=["pack", "fetch"])
     parser.add_argument("--archive", type=Path, help="Verify a local bundle instead of downloading")
+    parser.add_argument("--tag", help="GitHub release tag that will host the packed bundle")
     args = parser.parse_args()
-    pack() if args.command == "pack" else fetch(args.archive)
+    if args.command == "pack" and not args.tag:
+        parser.error("pack requires --tag")
+    pack(args.tag) if args.command == "pack" else fetch(args.archive)
